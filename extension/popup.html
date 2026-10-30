@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Maps schaalreferentie</title>
+<style>
+  body { width: 330px; margin: 0; padding: 12px 14px; font: 13px/1.4 Roboto, Arial, sans-serif; color: #202124; }
+  h1 { font-size: 14px; margin: 0 0 8px; font-weight: 500; }
+  h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #5f6368; margin: 14px 0 4px; font-weight: 500; }
+  label.row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+  label.row .size { margin-left: auto; color: #5f6368; font-size: 11px; white-space: nowrap; }
+  details { margin: 2px 0; }
+  summary { cursor: pointer; color: #5f6368; font-size: 12px; padding: 2px 0; }
+  button.del { border: 0; background: transparent; color: #5f6368; cursor: pointer; font-size: 13px; padding: 0 4px; }
+  button.del:hover { color: #c5221f; }
+  .state { color: #5f6368; font-size: 12px; margin-bottom: 6px; min-height: 16px; }
+  .cap { display: flex; gap: 6px; margin-top: 4px; }
+  .cap input { flex: 1; min-width: 0; padding: 5px 8px; border: 1px solid #dadce0; border-radius: 6px; font: inherit; }
+  .cap button { padding: 5px 10px; border: 0; border-radius: 6px; background: #1a73e8; color: #fff; font: inherit; cursor: pointer; white-space: nowrap; }
+  .cap button:disabled { background: #9aa0a6; cursor: default; }
+  .hint { color: #5f6368; font-size: 11px; margin-top: 4px; }
+  .sliders { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: center; font-size: 12px; }
+  .sliders input { width: 100%; }
+  .toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .msg { font-size: 12px; margin-top: 4px; min-height: 16px; color: #188038; }
+  .msg.err { color: #c5221f; }
+  .addr { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .addr span { flex: 1; }
+  .addr button { border: 0; background: transparent; color: #1a73e8; cursor: pointer; font: inherit; font-size: 12px; padding: 0; }
+</style>
+</head>
+<body>
+  <h1>Maps schaalreferentie</h1>
+  <label class="toggle"><input type="checkbox" id="enabled"> Referentie tonen op Google Maps</label>
+  <div class="state" id="state"></div>
+
+  <h2>Mijn adres</h2>
+  <div id="addrSet" class="addr" hidden><span id="addrLabel"></span><button id="addrClear">Verwijderen</button></div>
+  <div id="addrForm">
+    <div class="cap">
+      <input id="addrInput" placeholder="Straat huisnummer, plaats">
+      <button id="addrBtn">Instellen</button>
+    </div>
+    <div class="hint">Je gemeente, wijk en buurt worden dan als referentie gebruikt, met een stipje op je adres. Alleen Nederlandse adressen (opgezocht via PDOK). Het adres blijft op deze computer.</div>
+  </div>
+  <div class="msg" id="addrMsg"></div>
+
+  <h2>Referenties</h2>
+  <div id="refs"></div>
+
+  <h2>Huidige kaartuitsnede opslaan</h2>
+  <div class="cap">
+    <input id="capName" placeholder="Naam, bijv. mijn vakantie-eiland">
+    <button id="capBtn">Opslaan</button>
+  </div>
+  <div class="hint">Zoom op Google Maps zo in dat het gebied het scherm vult, en sla het op als rechthoek. Werkt overal ter wereld.</div>
+  <div class="msg" id="msg"></div>
+
+  <h2>Venster</h2>
+  <div class="sliders">
+    <span>Breedte</span><input type="range" id="boxW" min="140" max="420" step="10"><span id="boxWv"></span>
+    <span>Hoogte</span><input type="range" id="boxH" min="100" max="320" step="10"><span id="boxHv"></span>
+  </div>
+  <div class="hint">Het venster is op de kaart te verslepen. Klik erop om handmatig een kleinere referentie te kiezen; "auto" keert terug naar automatisch.</div>
+  <script src="references.js"></script>
+  <script src="geo.js"></script>
+  <script src="pdok.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
