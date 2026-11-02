@@ -73,12 +73,16 @@ def build(dl, out, factor=1.0):
         p = f["properties"]
         add("prov-" + p["statcode"], p["statnaam"], shape(f["geometry"]), 120, src)
 
-    refs.append({
-        "id": "km2", "name": "1 vierkante kilometer", "width_m": 1000, "height_m": 1000,
-        "bbox": [-500, -500, 500, 500],
-        "polygons": [[[[-500, -500], [500, -500], [500, 500], [-500, 500], [-500, -500]]]],
-        "source": "1 x 1 km",
-    })
+    # Generic squares fill the gaps between the Netherlands and 1 km² for users without an address
+    # (and outside the Netherlands).
+    for rid, name, size in (("km100", "100 × 100 km", 100000), ("km10", "10 × 10 km", 10000), ("km2", "1 vierkante kilometer", 1000)):
+        h = size / 2
+        refs.append({
+            "id": rid, "name": name, "width_m": size, "height_m": size,
+            "bbox": [-h, -h, h, h],
+            "polygons": [[[[-h, -h], [h, -h], [h, h], [-h, h], [-h, -h]]]],
+            "source": f"{size // 1000} x {size // 1000} km",
+        })
 
     circle = [[round(9.15 * math.cos(a), 2), round(9.15 * math.sin(a), 2)]
               for a in [i * 2 * math.pi / 36 for i in range(37)]]

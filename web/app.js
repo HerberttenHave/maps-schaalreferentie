@@ -88,13 +88,13 @@
     }
     const w = boxW - 2 * PAD, h = boxH - 2 * PAD;
     // Largest reference that fits. If that one would be a speck (under 12 px) while the next larger
-    // one overflows the panel by at most 60 percent, show the larger one clipped instead.
+    // one overflows the panel by at most a factor 2, show the larger one clipped instead.
     for (let i = 0; i < refs.length; i++) {
       const r = refs[i];
       if (!fits(r, mpp, w, h)) continue;
       if (i > 0 && Math.max(r.width_m, r.height_m) / mpp < 12) {
         const big = refs[i - 1];
-        if (big.width_m / mpp <= 1.6 * w && big.height_m / mpp <= 1.6 * h) return big;
+        if (big.width_m / mpp <= 2 * w && big.height_m / mpp <= 2 * h) return big;
       }
       return r;
     }
