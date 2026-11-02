@@ -15,6 +15,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 #map { position: fixed; inset: 0; z-index: 0; }
+/* on Google Maps the shape and the locate button sit above Google's own bottom-right links */
+body.map-google #msr-widget { bottom: calc(var(--safe-b) + var(--gap) + 24px); }
+body.map-google #locateBtn { bottom: calc(var(--safe-b) + var(--panel-h) + 2 * var(--gap) + 24px); }
 .leaflet-top { top: calc(var(--safe-t) + 58px); }
 @media (pointer: coarse) { .leaflet-control-zoom { display: none; } }
 .leaflet-bottom.leaflet-left { max-width: calc(100vw - var(--panel-w) - 3 * var(--gap)); }

@@ -14,6 +14,8 @@ Chrome-extensie die rechtsonder in Google Maps een vorm tekent die je kent, op p
 
 Geen installatie nodig. Open **https://herberttenhave.github.io/maps-schaalreferentie/** op je telefoon (of computer). Je krijgt een eigen kaart (OpenStreetMap) met rechtsonder hetzelfde venster: Nederland, je provincie, gemeente, wijk en buurt, een vierkante kilometer en een voetbalveld, op de schaal van de kaart. Zoeken wereldwijd, knop voor je eigen locatie, tik op het venster voor een kleinere referentie. Je adres vul je in onder **?** rechtsboven; het blijft op je telefoon. Nederlands en Engels. Geen cookies, geen analytics. De link kun je zo doorsturen in WhatsApp.
 
+**Google Maps als ondergrond.** De webversie toont OpenStreetMap. Wie liever Google Maps ziet (kaart of satelliet) kan dat kiezen onder **?** zodra er een Google Maps API-sleutel in `web/config.js` staat; zonder sleutel wordt niets van Google geladen. Hoe je die sleutel aanmaakt en wat het kost staat in [store/google-maps-sleutel.md](store/google-maps-sleutel.md).
+
 ### Installeren (Chrome, Edge of Brave; Windows en Mac)
 
 1. Download de zip: **https://github.com/HerberttenHave/maps-schaalreferentie/releases/latest**
@@ -64,6 +66,8 @@ The built-in shapes are Dutch (the Netherlands and its provinces; address lookup
 
 No installation needed. Open **https://herberttenhave.github.io/maps-schaalreferentie/** on your phone (or computer). You get a map of its own (OpenStreetMap) with the same panel bottom right: the Netherlands, your province, municipality, district and neighbourhood, one square kilometre and a football pitch, at the scale of the map. Worldwide search, a button for your own location, tap the panel for a smaller reference. Enter your Dutch address under **?** top right; it stays on your phone. Dutch and English. No cookies, no analytics. The link is easy to forward in WhatsApp.
 
+**Google Maps as the base map.** The web version shows OpenStreetMap. Visitors who prefer Google Maps (roadmap or satellite) can pick it under **?** once a Google Maps API key is set in `web/config.js`; without a key nothing from Google is loaded. How to create the key and what it costs is described (in Dutch) in [store/google-maps-sleutel.md](store/google-maps-sleutel.md).
+
 ### Install (Chrome, Edge or Brave; Windows and Mac)
 
 1. Download the zip: **https://github.com/HerberttenHave/maps-schaalreferentie/releases/latest**
@@ -104,7 +108,7 @@ extension/           de extensie zelf (Manifest V3) / the extension itself
   pdok.js            adres en omtrekken ophalen bij PDOK
   popup.html/.js     instellingen, adres, eigen uitsnedes
 web/                 webversie voor telefoon (GitHub Pages) / web version for phones
-  index.html, app.js, app.css   Leaflet + OpenStreetMap, zelfde venster; laadt ../extension/references.js, geo.js, pdok.js
+  index.html, app.js, app.css   Leaflet + OpenStreetMap (of Google Maps via config.js), zelfde venster; laadt ../extension/references.js, geo.js, pdok.js
 index.html           stuurt door naar web/ / redirects to web/
 tools/
   build_references.py  bouwt references.js uit PDOK GeoJSON (Python 3, shapely)

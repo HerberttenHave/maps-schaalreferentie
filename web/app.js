@@ -27,6 +27,8 @@
       geoFail: 'Locatie niet beschikbaar', geoDenied: 'Geef de browser toegang tot je locatie',
       kind: { gemeente: 'gemeente', wijk: 'wijk', buurt: 'buurt' },
       names: {},
+      mapChoice: 'Kaart', mapChoiceHelp: 'Google Maps wordt alleen geladen als je het kiest; dan gelden de voorwaarden van Google. Je keuze wordt onthouden.',
+      googleLoading: 'Google Maps laden...', googleFail: 'Google Maps kon niet laden, terug naar OpenStreetMap.',
     },
     en: {
       searchPlaceholder: 'Search a place or address', search: 'Search', whatIs: 'What is this?', close: 'Close',
@@ -46,11 +48,13 @@
       geoFail: 'Location not available', geoDenied: 'Allow the browser to use your location',
       kind: { gemeente: 'municipality', wijk: 'district', buurt: 'neighbourhood' },
       names: { nl: 'The Netherlands', km2: '1 square kilometre', voetbalveld: 'Football pitch' },
+      mapChoice: 'Map', mapChoiceHelp: 'Google Maps is only loaded when you choose it; Google\'s terms then apply. Your choice is remembered.',
+      googleLoading: 'Loading Google Maps...', googleFail: 'Google Maps could not load, back to OpenStreetMap.',
     },
   };
 
   // ---------- storage (localStorage only) ----------
-  const KEYS = { lang: 'msr.lang', disabled: 'msr.disabled', areas: 'msr.areas', markers: 'msr.markers', address: 'msr.address', view: 'msr.view', seen: 'msr.seen', pos: 'msr.pos' };
+  const KEYS = { lang: 'msr.lang', disabled: 'msr.disabled', areas: 'msr.areas', markers: 'msr.markers', address: 'msr.address', view: 'msr.view', seen: 'msr.seen', pos: 'msr.pos', map: 'msr.map' };
   function load(key, fallback) {
     try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; }
   }
@@ -124,44 +128,170 @@
   }
   const start = viewFromHash() || load(KEYS.view, null) || DEFAULT_VIEW;
 
-  const map = L.map('map', {
-    center: [start.lat, start.lng], zoom: start.zoom,
-    zoomControl: true, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90,
-    worldCopyJump: true, attributionControl: false, minZoom: 2,
-  });
-  L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-  }).addTo(map);
+  // Base map: OpenStreetMap in Leaflet (default) or Google Maps, only when web/config.js holds a key.
+  // Both sit behind the same small adapter so the panel, search and address flow do not care which one runs.
+  // Google tiles are never loaded into Leaflet; Google is shown only through its own JavaScript API.
+  const CONFIG = window.MSR_CONFIG || {};
+  const GOOGLE_KEY = String(CONFIG.googleMapsKey || '').trim();
+  let mapChoice = GOOGLE_KEY && load(KEYS.map, 'osm') === 'google' ? 'google' : 'osm';
+  let mapApi = null;
 
-  function readView() {
-    const c = map.getCenter();
-    const z = map.getZoom();
-    const mpp = metresPerPixel(c.lat, z);
+  function setView(v) {
+    const mpp = metresPerPixel(v.lat, v.zoom);
     if (!(mpp > 0) || !isFinite(mpp)) return;
-    view = { lat: c.lat, lng: c.lng, mpp, zoom: z };
+    view = { lat: v.lat, lng: v.lng, mpp, zoom: v.zoom };
+  }
+  function readView() {
+    const v = mapApi && mapApi.getView();
+    if (v) setView(v);
   }
   function schedule() {
     readView();
     if (!raf) raf = setTimeout(draw, 16);   // setTimeout, not requestAnimationFrame: the latter stalls in background tabs
   }
-  map.on('move zoom resize', schedule);
-  map.on('zoomanim', (e) => {   // animated zoom (wheel, double tap, +/-): draw the target scale at once
-    view = { lat: e.center.lat, lng: e.center.lng, mpp: metresPerPixel(e.center.lat, e.zoom), zoom: e.zoom };
-    if (!raf) raf = setTimeout(draw, 16);   // setTimeout, not requestAnimationFrame: the latter stalls in background tabs
-  });
-  map.on('moveend zoomend', () => {
-    schedule();
+  function persistView() {
     if (!view) return;
     const v = { lat: +view.lat.toFixed(5), lng: +view.lng.toFixed(5), zoom: +view.zoom.toFixed(2) };
     save(KEYS.view, v);
     history.replaceState(null, '', '#' + v.lat + ',' + v.lng + ',' + v.zoom + 'z');
-  });
+  }
   window.addEventListener('hashchange', () => {
     const v = viewFromHash();
-    if (v) map.setView([v.lat, v.lng], v.zoom);
+    if (v && mapApi) mapApi.setView(v.lat, v.lng, v.zoom);
   });
+
+  // Adapter interface: getView() -> {lat, lng, zoom} or null; setView(lat, lng, zoom); fitBounds(s, w, n, e, maxZoom);
+  // setHere(lat, lng); on('move', cb) continuous (cb gets the target view during an animated zoom); on('moveend', cb); destroy().
+  function makeEmitter() {
+    const handlers = { move: [], moveend: [] };
+    return { on: (k, cb) => handlers[k].push(cb), emit: (k, v) => handlers[k].forEach((cb) => cb(v)) };
+  }
+
+  function leafletAdapter(el, v) {
+    const map = L.map(el, {
+      center: [v.lat, v.lng], zoom: v.zoom,
+      zoomControl: true, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90,
+      worldCopyJump: true, attributionControl: false, minZoom: 2,
+    });
+    L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    }).addTo(map);
+    const ev = makeEmitter();
+    map.on('move zoom resize', () => ev.emit('move'));
+    map.on('zoomanim', (e) => ev.emit('move', { lat: e.center.lat, lng: e.center.lng, zoom: e.zoom }));   // target scale at once
+    map.on('moveend zoomend', () => ev.emit('moveend'));
+    let here = null;
+    return {
+      kind: 'osm', on: ev.on,
+      getView() { const c = map.getCenter(); return { lat: c.lat, lng: c.lng, zoom: map.getZoom() }; },
+      setView(lat, lng, zoom) { map.setView([lat, lng], zoom); },
+      fitBounds(s, w, n, e, maxZoom) { map.fitBounds([[s, w], [n, e]], { maxZoom }); },
+      setHere(lat, lng) {
+        if (here) here.remove();
+        here = L.circleMarker([lat, lng], { radius: 7, color: '#fff', weight: 2, fillColor: '#1a73e8', fillOpacity: 1 }).addTo(map);
+      },
+      destroy() { map.remove(); },
+    };
+  }
+
+  function googleAdapter(el, v) {
+    const g = google.maps;
+    const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+    const map = new g.Map(el, {
+      center: { lat: v.lat, lng: v.lng }, zoom: v.zoom, minZoom: 2,
+      mapTypeId: 'roadmap',
+      mapTypeControl: true,   // roadmap / satellite, bottom left above the Google logo
+      mapTypeControlOptions: { style: g.MapTypeControlStyle.DROPDOWN_MENU, position: g.ControlPosition.LEFT_BOTTOM },
+      zoomControl: !coarse, zoomControlOptions: { position: g.ControlPosition.LEFT_CENTER },
+      streetViewControl: false, fullscreenControl: false, clickableIcons: false,
+      gestureHandling: 'greedy',
+    });
+    const ev = makeEmitter();
+    map.addListener('bounds_changed', () => ev.emit('move'));
+    map.addListener('idle', () => ev.emit('moveend'));
+    let here = null;
+    return {
+      kind: 'google', on: ev.on,
+      getView() {
+        const c = map.getCenter(), z = map.getZoom();
+        return c && z != null ? { lat: c.lat(), lng: c.lng(), zoom: z } : null;
+      },
+      setView(lat, lng, zoom) { map.moveCamera({ center: { lat, lng }, zoom }); },
+      fitBounds(s, w, n, e, maxZoom) {
+        map.fitBounds(new g.LatLngBounds({ lat: s, lng: w }, { lat: n, lng: e }), 0);
+        g.event.addListenerOnce(map, 'idle', () => { if (map.getZoom() > maxZoom) map.setZoom(maxZoom); });
+      },
+      setHere(lat, lng) {
+        if (here) here.setMap(null);
+        here = new g.Marker({
+          position: { lat, lng }, map, clickable: false,
+          icon: { path: g.SymbolPath.CIRCLE, scale: 7, fillColor: '#1a73e8', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 },
+        });
+      },
+      destroy() { g.event.clearInstanceListeners(map); },
+    };
+  }
+
+  // Loads the Google Maps JavaScript API once. Rejects on a network error or a timeout; an invalid or
+  // unauthorised key is reported later by Google through gm_authFailure (see mountMap).
+  let googleLoad = null;
+  function loadGoogle() {
+    if (googleLoad) return googleLoad;
+    googleLoad = new Promise((resolve, reject) => {
+      if (window.google && google.maps && google.maps.Map) { resolve(); return; }
+      const timer = setTimeout(() => reject(new Error('timeout')), 15000);
+      window.__msrGoogleReady = () => { clearTimeout(timer); resolve(); };
+      const s = document.createElement('script');
+      s.src = 'https://maps.googleapis.com/maps/api/js?' + new URLSearchParams({
+        key: GOOGLE_KEY, v: 'weekly', loading: 'async', callback: '__msrGoogleReady', language: lang, region: 'NL',
+      }).toString();
+      s.async = true;
+      s.onerror = () => { clearTimeout(timer); reject(new Error('load')); };
+      document.head.appendChild(s);
+    });
+    googleLoad.catch(() => { googleLoad = null; });
+    return googleLoad;
+  }
+  window.gm_authFailure = () => { if (mapChoice === 'google') failGoogle(); };
+
+  let mounting = 0;
+  async function mountMap(kind) {
+    const token = ++mounting;
+    const v = view ? { lat: view.lat, lng: view.lng, zoom: view.zoom } : start;
+    if (mapApi) { mapApi.destroy(); mapApi = null; }
+    const el = $('map');
+    el.innerHTML = '';
+    el.removeAttribute('style');
+    el.className = '';
+    if (kind === 'google') {
+      toast(t('googleLoading'));
+      try { await loadGoogle(); } catch (e) { if (token === mounting) failGoogle(); return; }
+      if (token !== mounting) return;
+      $('searchMsg').hidden = true;
+      mapApi = googleAdapter(el, v);
+    } else {
+      mapApi = leafletAdapter(el, v);
+    }
+    document.body.classList.toggle('map-google', kind === 'google');
+    mapApi.on('move', (target) => {
+      if (target) { setView(target); if (!raf) raf = setTimeout(draw, 16); } else schedule();
+    });
+    mapApi.on('moveend', () => { schedule(); persistView(); });
+    schedule();
+  }
+  function failGoogle() {
+    toast(t('googleFail'), 4000);
+    setMapChoice('osm');
+  }
+  function setMapChoice(kind) {
+    if (kind === 'google' && !GOOGLE_KEY) kind = 'osm';
+    mapChoice = kind;
+    save(KEYS.map, kind);
+    document.querySelectorAll('.mapPick').forEach((b) => b.classList.toggle('on', b.dataset.map === kind));
+    if (!mapApi || mapApi.kind !== kind) mountMap(kind);
+  }
 
   // ---------- panel ----------
   const widget = $('msr-widget');
@@ -336,7 +466,7 @@
       if (!hits.length) { toast(t('nothingFound'), 2500); return; }
       const h = hits[0];
       const bb = h.boundingbox.map(Number); // [south, north, west, east]
-      map.fitBounds([[bb[0], bb[2]], [bb[1], bb[3]]], { maxZoom: 16 });
+      if (mapApi) mapApi.fitBounds(bb[0], bb[2], bb[1], bb[3], 16);
       toast(h.display_name, 4000);
     } catch (err) {
       toast(t('searchFail'), 3000);
@@ -344,20 +474,20 @@
   });
 
   // ---------- geolocation ----------
-  let hereMarker = null;
   $('locateBtn').addEventListener('click', () => {
     if (!navigator.geolocation) { toast(t('geoFail'), 2500); return; }
     $('locateBtn').classList.add('busy');
-    map.locate({ setView: true, maxZoom: 15, enableHighAccuracy: true, timeout: 12000 });
-  });
-  map.on('locationfound', (e) => {
-    $('locateBtn').classList.remove('busy');
-    if (hereMarker) hereMarker.remove();
-    hereMarker = L.circleMarker(e.latlng, { radius: 7, color: '#fff', weight: 2, fillColor: '#1a73e8', fillOpacity: 1 }).addTo(map);
-  });
-  map.on('locationerror', (e) => {
-    $('locateBtn').classList.remove('busy');
-    toast(e.code === 1 ? t('geoDenied') : t('geoFail'), 3000);
+    navigator.geolocation.getCurrentPosition((pos) => {
+      $('locateBtn').classList.remove('busy');
+      if (!mapApi) return;
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      const cur = mapApi.getView();
+      mapApi.setView(lat, lng, Math.max(15, cur ? cur.zoom : 0));
+      mapApi.setHere(lat, lng);
+    }, (err) => {
+      $('locateBtn').classList.remove('busy');
+      toast(err.code === 1 ? t('geoDenied') : t('geoFail'), 3000);
+    }, { enableHighAccuracy: true, timeout: 12000 });
   });
 
   // ---------- sheet: about, address, references, language ----------
@@ -469,18 +599,22 @@
     document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); el.setAttribute('aria-label', t(el.dataset.i18nTitle)); });
     $('langBtn').textContent = lang === 'nl' ? 'EN' : 'NL';
     $('langBtn').title = lang === 'nl' ? 'English' : 'Nederlands';
-    document.querySelectorAll('.langPick').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
+    document.querySelectorAll('.langPick[data-lang]').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
     renderRefs();
     currentId = null;
     schedule();
   }
   function setLang(l) { lang = l; save(KEYS.lang, l); applyLang(); }
   $('langBtn').addEventListener('click', () => setLang(lang === 'nl' ? 'en' : 'nl'));
-  document.querySelectorAll('.langPick').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang)));
+  document.querySelectorAll('.langPick[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang)));
+
+  // ---------- map choice (only shown when a Google key is configured) ----------
+  $('mapChoice').hidden = !GOOGLE_KEY;
+  document.querySelectorAll('.mapPick').forEach((b) => b.addEventListener('click', () => setMapChoice(b.dataset.map)));
 
   // ---------- start ----------
   renderAddress();
   applyLang();
   if (!load(KEYS.seen, false)) openSheet();
-  schedule();
+  setMapChoice(mapChoice);
 })();
