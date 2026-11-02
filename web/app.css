@@ -64,19 +64,20 @@ body {
   position: fixed; z-index: 1000;
   right: var(--gap); bottom: calc(var(--safe-b) + var(--gap));
   width: var(--panel-w);
-  background: rgba(255,255,255,.9);
-  border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  background: transparent; pointer-events: none;   /* the map stays usable under the shape */
   font-size: 12px; line-height: 1.3; color: #202124;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 2px #fff, 0 1px 2px #fff;
   user-select: none; -webkit-user-select: none; overflow: hidden; cursor: pointer;
   touch-action: manipulation;
 }
+#msr-widget .msr-head, #msr-widget .msr-foot { pointer-events: auto; }
 #msr-widget .msr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 10px 2px; }
 #msr-widget .msr-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .3s; }
 #msr-widget .msr-name.msr-flash { color: #c2410c; }
 #msr-widget .msr-size { color: #5f6368; white-space: nowrap; font-size: 11px; }
 #msr-widget canvas { display: block; }
 #msr-widget .msr-foot { display: flex; justify-content: space-between; align-items: center; padding: 0 6px 4px 10px; font-size: 10px; color: #80868b; min-height: 18px; }
-#msr-widget .msr-tools { display: flex; gap: 2px; }
+#msr-widget .msr-tools { display: flex; gap: 2px; background: rgba(255,255,255,.85); border-radius: 6px; }
 #msr-widget .msr-tools button {
   border: 0; background: transparent; color: #5f6368; font: inherit; font-size: 12px;
   padding: 2px 6px; cursor: pointer; border-radius: 4px; min-width: 24px;

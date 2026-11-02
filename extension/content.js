@@ -247,24 +247,20 @@
     const tooBig = ref.width_m * s > W || ref.height_m * s > H;
     const tiny = Math.max(ref.width_m, ref.height_m) * s < 6;
 
+    // Outline only, no fill, no panel background: the shape lies over the map like a stencil.
+    // A white halo under the red line keeps it readable on any map colour.
     ctx.lineJoin = 'round';
-    ctx.lineWidth = tiny ? 1 : 1.5;
-    ctx.fillStyle = 'rgba(234, 88, 12, 0.28)';
-    ctx.strokeStyle = 'rgba(194, 65, 12, 0.95)';
-    for (const poly of ref.polygons) {
+    ctx.lineCap = 'round';
+    const trace = () => {
       ctx.beginPath();
-      for (const ring of poly) {
+      for (const poly of ref.polygons) for (const ring of poly) {
         ring.forEach((p, i) => { if (i === 0) ctx.moveTo(X(p[0]), Y(p[1])); else ctx.lineTo(X(p[0]), Y(p[1])); });
         ctx.closePath();
       }
-      ctx.fill('evenodd');
-      ctx.stroke();
-    }
-    if (ref.lines) {
-      ctx.beginPath();
-      for (const line of ref.lines) line.forEach((p, i) => { if (i === 0) ctx.moveTo(X(p[0]), Y(p[1])); else ctx.lineTo(X(p[0]), Y(p[1])); });
-      ctx.stroke();
-    }
+      if (ref.lines) for (const line of ref.lines) line.forEach((p, i) => { if (i === 0) ctx.moveTo(X(p[0]), Y(p[1])); else ctx.lineTo(X(p[0]), Y(p[1])); });
+    };
+    trace(); ctx.lineWidth = tiny ? 3 : 4.5; ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke();
+    trace(); ctx.lineWidth = tiny ? 1 : 2; ctx.strokeStyle = '#d32f2f'; ctx.stroke();
     const marker = ref.marker || (local.markers && local.markers[ref.id]);
     if (marker && !tiny) {
       ctx.beginPath();
@@ -275,15 +271,14 @@
     if (tiny) { // make a near-invisible speck findable
       ctx.beginPath();
       ctx.arc(W / 2, H / 2, 7, 0, Math.PI * 2);
-      ctx.strokeStyle = 'rgba(194, 65, 12, 0.5)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke();
+      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(211, 47, 47, 0.7)'; ctx.stroke();
     }
     if (tooBig) {
-      ctx.fillStyle = 'rgba(32, 33, 36, 0.7)';
       ctx.font = '11px Roboto, Arial, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('groter dan dit venster', W / 2, H - 6);
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.strokeText('groter dan dit venster', W / 2, H - 6);
+      ctx.fillStyle = '#202124'; ctx.fillText('groter dan dit venster', W / 2, H - 6);
     }
   }
 
