@@ -57,7 +57,7 @@ async function main() {
     console.log(consent);
     if (consent === 'consent declined') await sleep(7000);
     for (let i = 0; i < 20; i++) {
-      const w = await evaluate(`(() => { const w = document.getElementById('msr-widget'); return w && w.style.visibility !== 'hidden' ? w.querySelector('.msr-name').textContent + ' | ' + w.querySelector('.msr-size').textContent + ' | ' + w.querySelector('.msr-scale').textContent : null; })()`);
+      const w = await evaluate(`(() => { const w = document.getElementById('msr-widget'); return w && w.style.visibility !== 'hidden' ? w.querySelector('.msr-name').textContent + ' | ' + w.querySelector('.msr-size').textContent : null; })()`);
       if (w) return w;
       await sleep(500);
     }

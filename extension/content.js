@@ -246,12 +246,14 @@
 
     const s = 1 / view.mpp;                   // px per metre
     const b = ref.bbox;                       // [minx, miny, maxx, maxy] metres
+    const tooBig = ref.width_m * s > W || ref.height_m * s > H;
     const cx = W / 2 - ((b[0] + b[2]) / 2) * s;
-    const cy = H / 2 + ((b[1] + b[3]) / 2) * s;
+    // The shape sits on the bottom edge of the frame, so the label row reads directly under it;
+    // only a clipped (too big) shape is centred.
+    const cy = tooBig ? H / 2 + ((b[1] + b[3]) / 2) * s : (H - 4) + b[1] * s;
     const X = (x) => cx + x * s;
     const Y = (y) => cy - y * s;
 
-    const tooBig = ref.width_m * s > W || ref.height_m * s > H;
     const tiny = Math.max(ref.width_m, ref.height_m) * s < 6;
 
     // Outline only, no fill, no panel background: the shape lies over the map like a stencil.
