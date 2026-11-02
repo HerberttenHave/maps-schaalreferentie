@@ -11,8 +11,19 @@ const crypto = require('crypto');
 
 // Google Chrome 137+ ignores --load-extension; use Chromium, Chrome for Testing or Edge via MSR_BROWSER.
 const CHROME = process.env.MSR_BROWSER || 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const EXT = path.resolve(__dirname, '..', 'extension');
-const PORT = 9333;
+// Load a fresh copy under a random path: Edge caches content-script CSS per extension id (path), so a
+// reused path can inject stale CSS even in a new profile.
+const EXT_SRC = path.resolve(__dirname, '..', 'extension');
+const EXT = fs.mkdtempSync(path.join(os.tmpdir(), 'msr-ext-'));
+fs.cpSync(EXT_SRC, EXT, { recursive: true });
+// Edge also caches the injected CSS by file name: give the copy a unique stylesheet name.
+{
+  const cssName = 'overlay-' + Date.now() + '.css';
+  fs.renameSync(path.join(EXT, 'overlay.css'), path.join(EXT, cssName));
+  const mf = path.join(EXT, 'manifest.json');
+  fs.writeFileSync(mf, fs.readFileSync(mf, 'utf8').replace('"overlay.css"', JSON.stringify(cssName)));
+}
+const PORT = 9333 + Math.floor(Math.random() * 500);   // a fixed port would silently reuse a lingering old instance
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function extensionId(dir) { // unpacked extension id: sha256 of the path, first 32 hex digits mapped to a-p
@@ -57,7 +68,7 @@ async function main() {
     console.log(consent);
     if (consent === 'consent declined') await sleep(7000);
     for (let i = 0; i < 20; i++) {
-      const w = await evaluate(`(() => { const w = document.getElementById('msr-widget'); return w && w.style.visibility !== 'hidden' ? w.querySelector('.msr-name').textContent + ' | ' + w.querySelector('.msr-size').textContent : null; })()`);
+      const w = await evaluate(`(() => { const w = document.getElementById('msr-widget'); return w && w.style.visibility !== 'hidden' ? w.querySelector('.msr-name').textContent + ' | ' + w.querySelector('.msr-size').textContent + ' | bottom ' + getComputedStyle(w).bottom + ' right ' + getComputedStyle(w).right + ' pe=' + getComputedStyle(w).pointerEvents + ' ts=' + (getComputedStyle(w).textShadow !== 'none') + ' rect=' + JSON.stringify(w.getBoundingClientRect()) + ' head=' + getComputedStyle(w.querySelector('.msr-head')).flexDirection : null; })()`);
       if (w) return w;
       await sleep(500);
     }
@@ -75,13 +86,14 @@ async function main() {
   const results = {};
   results.nl = await openMaps('https://www.google.com/maps/@35.6,139.7,6z?hl=nl');
   console.log('widget (Tokyo, 6z):', results.nl);
-  if (!results.nl) { // diagnostics
+  if (process.env.MSR_DIAG || !results.nl) { // diagnostics
     console.log('page:', await evaluate(`location.href + ' | widget: ' + !!document.getElementById('msr-widget') + ' | title: ' + document.title`));
     await send('Page.navigate', { url: 'chrome://extensions-internals/' });
     await sleep(1500);
     const txt = await evaluate('document.body.innerText');
     const ids = [...String(txt).matchAll(/"id": "([a-p]{32})"[\s\S]*?"location": "([^"]+)"[\s\S]*?"name": "([^"]+)"/g)].map((m) => m.slice(1).join(' '));
     console.log('installed extensions:', ids.length ? ids : String(txt).slice(0, 400));
+    const at = String(txt).indexOf('Maps schaalreferentie'); if (at >= 0) console.log('ours:', String(txt).slice(Math.max(0, at - 600), at + 900).replace(/\s+/g, ' '));
   }
   if (results.nl) await shot('1-nederland-japan.png');
 
@@ -116,8 +128,9 @@ async function main() {
 
   ws.close();
   chrome.kill();
+  if (process.platform === 'win32') { try { require('child_process').execSync(`taskkill /PID ${chrome.pid} /T /F`, { stdio: 'ignore' }); } catch (e) { /* already gone */ } }
   await sleep(500);
-  try { fs.rmSync(profile, { recursive: true, force: true }); } catch (e) { /* profile may still be locked */ }
+  try { fs.rmSync(profile, { recursive: true, force: true }); fs.rmSync(EXT, { recursive: true, force: true }); } catch (e) { /* may still be locked */ }
   const ok = !!results.nl && (!address || (results.areas && results.areas.length === 3 && !!results.city));
   console.log(ok ? 'E2E OK' : 'E2E FAILED');
   process.exit(ok ? 0 : 1);
