@@ -70,14 +70,17 @@ body {
   user-select: none; -webkit-user-select: none; overflow: hidden; cursor: pointer;
   touch-action: manipulation;
 }
-#msr-widget .msr-head, #msr-widget .msr-foot { pointer-events: auto; }
-#msr-widget .msr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 10px 2px; }
+#msr-widget .msr-head, #msr-widget .msr-tools { pointer-events: auto; touch-action: none; }
+#msr-widget.msr-selected { pointer-events: auto; touch-action: none; outline: 1.5px dashed rgba(211,47,47,.8); outline-offset: 2px; border-radius: 4px; }
+#msr-widget.msr-selected .msr-tools { display: flex; }
+#msr-widget .msr-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 2px 6px 0; }
 #msr-widget .msr-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: color .3s; }
 #msr-widget .msr-name.msr-flash { color: #c2410c; }
 #msr-widget .msr-size { color: #5f6368; white-space: nowrap; font-size: 11px; }
 #msr-widget canvas { display: block; }
-#msr-widget .msr-foot { display: flex; justify-content: space-between; align-items: center; padding: 0 6px 4px 10px; font-size: 10px; color: #80868b; min-height: 18px; }
-#msr-widget .msr-tools { display: flex; gap: 2px; background: rgba(255,255,255,.85); border-radius: 6px; }
+#msr-widget .msr-foot { display: flex; justify-content: flex-end; align-items: center; padding: 0 6px 2px; font-size: 10px; color: #80868b; min-height: 18px; }
+#msr-widget .msr-tools { display: none; gap: 2px; background: rgba(255,255,255,.85); border-radius: 6px; }
+@media (hover: hover) { #msr-widget:hover .msr-tools { display: flex; } }
 #msr-widget .msr-tools button {
   border: 0; background: transparent; color: #5f6368; font: inherit; font-size: 12px;
   padding: 2px 6px; cursor: pointer; border-radius: 4px; min-width: 24px;

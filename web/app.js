@@ -11,7 +11,7 @@
   const T = {
     nl: {
       searchPlaceholder: 'Zoek een plaats of adres', search: 'Zoeken', whatIs: 'Wat is dit?', close: 'Sluiten',
-      locate: 'Mijn locatie', panelHint: 'Tik om een kleinere referentie te kiezen',
+      locate: 'Mijn locatie', panelHint: 'Tik om te selecteren, sleep om te verplaatsen',
       larger: 'Grotere referentie', smaller: 'Kleinere referentie', backToAuto: 'Terug naar automatisch',
       aboutText: 'Rechtsonder staat een vorm die je kent: Nederland, je provincie, gemeente, wijk of buurt, een vierkante kilometer of een voetbalveld, op precies dezelfde schaal als de kaart. Zoom in of uit en de vorm groeit mee. Past hij niet meer, dan springt het venster naar de volgende. Zo zie je overal ter wereld hoe groot iets is. Tik op het venster om zelf een kleinere referentie te kiezen.',
       aboutPrivacy: 'Geen cookies, geen tracking. Je instellingen en je adres blijven op je telefoon; alleen de opzoeking gaat naar PDOK, de geo-dienst van de overheid.',
@@ -30,7 +30,7 @@
     },
     en: {
       searchPlaceholder: 'Search a place or address', search: 'Search', whatIs: 'What is this?', close: 'Close',
-      locate: 'My location', panelHint: 'Tap to pick a smaller reference',
+      locate: 'My location', panelHint: 'Tap to select, drag to move',
       larger: 'Larger reference', smaller: 'Smaller reference', backToAuto: 'Back to automatic',
       aboutText: 'Bottom right you see a shape you know: the Netherlands, a province, municipality, district or neighbourhood, one square kilometre or a football pitch, at exactly the scale of the map. Zoom in or out and the shape grows with the map. When it no longer fits, the panel switches to the next one. So you can see how big anything is, anywhere in the world. Tap the panel to pick a smaller reference yourself.',
       aboutPrivacy: 'No cookies, no tracking. Your settings and address stay on your phone; only the lookup goes to PDOK, the Dutch national geo service.',
@@ -50,7 +50,7 @@
   };
 
   // ---------- storage (localStorage only) ----------
-  const KEYS = { lang: 'msr.lang', disabled: 'msr.disabled', areas: 'msr.areas', markers: 'msr.markers', address: 'msr.address', view: 'msr.view', seen: 'msr.seen' };
+  const KEYS = { lang: 'msr.lang', disabled: 'msr.disabled', areas: 'msr.areas', markers: 'msr.markers', address: 'msr.address', view: 'msr.view', seen: 'msr.seen', pos: 'msr.pos' };
   function load(key, fallback) {
     try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; }
   }
@@ -167,7 +167,6 @@
   const widget = $('msr-widget');
   const nameEl = widget.querySelector('.msr-name');
   const sizeEl = widget.querySelector('.msr-size');
-  const scaleEl = widget.querySelector('.msr-scale');
   const pinBtn = widget.querySelector('[data-act="auto"]');
   const canvas = widget.querySelector('canvas');
   const ctx = canvas.getContext('2d');
@@ -183,16 +182,63 @@
 
   widget.addEventListener('click', (e) => {
     const act = e.target.dataset && e.target.dataset.act;
+    if (!act) return;                      // plain taps select or drag, see setupDrag
     const refs = enabledReferences();
     const idx = refs.findIndex((r) => r.id === (pinnedId || currentId));
     if (act === 'auto') { pinnedId = null; }
     else if (act === 'prev') { pinnedId = refs[Math.max(0, idx - 1)] ? refs[Math.max(0, idx - 1)].id : null; }
     else if (act === 'next') { pinnedId = refs[Math.min(refs.length - 1, idx + 1)] ? refs[Math.min(refs.length - 1, idx + 1)].id : null; }
-    else { // plain tap: next smaller reference, then back to automatic
-      if (idx >= 0 && idx < refs.length - 1) pinnedId = refs[idx + 1].id; else pinnedId = null;
-    }
     schedule();
   });
+
+  // Select and drag: a tap on the label row toggles selection; while selected the whole frame can be
+  // dragged (mouse or finger). Dragging from the label row works without selecting first.
+  function setupDrag() {
+    let start = null;
+    widget.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0 || e.target.tagName === 'BUTTON') return;
+      const onLabel = !!e.target.closest('.msr-head');
+      if (!onLabel && !widget.classList.contains('msr-selected')) return;
+      const r = widget.getBoundingClientRect();
+      start = { id: e.pointerId, x: e.clientX, y: e.clientY, right: window.innerWidth - r.right, bottom: window.innerHeight - r.bottom, moved: false, onLabel };
+      widget.setPointerCapture(e.pointerId);
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    widget.addEventListener('pointermove', (e) => {
+      if (!start || e.pointerId !== start.id) return;
+      const dx = e.clientX - start.x, dy = e.clientY - start.y;
+      if (!start.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      start.moved = true;
+      widget.classList.add('msr-dragging');
+      widget.style.right = Math.max(0, start.right - dx) + 'px';
+      widget.style.bottom = Math.max(0, start.bottom - dy) + 'px';
+    });
+    const end = (e) => {
+      if (!start || e.pointerId !== start.id) return;
+      if (start.moved) {
+        widget.classList.remove('msr-dragging');
+        savePosition();
+      } else if (start.onLabel) {
+        widget.classList.toggle('msr-selected');
+      }
+      start = null;
+    };
+    widget.addEventListener('pointerup', end);
+    widget.addEventListener('pointercancel', end);
+    document.addEventListener('pointerdown', (e) => { if (!widget.contains(e.target)) widget.classList.remove('msr-selected'); }, true);
+  }
+  function savePosition() {
+    save(KEYS.pos, { right: parseFloat(widget.style.right), bottom: parseFloat(widget.style.bottom) });
+  }
+  (function restorePosition() {
+    const pos = load(KEYS.pos, null);
+    if (pos && typeof pos.right === 'number' && typeof pos.bottom === 'number') {
+      widget.style.right = Math.max(0, Math.min(pos.right, window.innerWidth - 60)) + 'px';
+      widget.style.bottom = Math.max(0, Math.min(pos.bottom, window.innerHeight - 60)) + 'px';
+    }
+  })();
+  setupDrag();
 
   function draw() {
     raf = 0;
@@ -209,7 +255,6 @@
     }
     nameEl.textContent = refName(ref);
     sizeEl.textContent = fmtLen(ref.width_m) + ' × ' + fmtLen(ref.height_m);
-    scaleEl.textContent = fmtScale(view.mpp);
     pinBtn.style.visibility = pinnedId ? '' : 'hidden';
 
     const W = boxW, H = boxH;

@@ -85,14 +85,14 @@
   }
 
   // ---------- widget ----------
-  let widget, nameEl, sizeEl, canvas, ctx, scaleEl, pinBtn, toolsEl;
+  let widget, nameEl, sizeEl, canvas, ctx, pinBtn, toolsEl;
   function build() {
     widget = document.createElement('div');
     widget.id = 'msr-widget';
     widget.innerHTML =
-      '<div class="msr-head"><span class="msr-name"></span><span class="msr-size"></span></div>' +
       '<canvas></canvas>' +
-      '<div class="msr-foot"><span class="msr-scale"></span><span class="msr-tools">' +
+      '<div class="msr-head" title="Tik of klik om te selecteren, sleep om te verplaatsen"><span class="msr-name"></span><span class="msr-size"></span></div>' +
+      '<div class="msr-foot"><span class="msr-tools">' +
       '<button data-act="prev" title="Grotere referentie">&#9664;</button>' +
       '<button data-act="auto" class="msr-pin" title="Terug naar automatisch">auto</button>' +
       '<button data-act="next" title="Kleinere referentie">&#9654;</button>' +
@@ -101,7 +101,6 @@
     document.documentElement.appendChild(widget);
     nameEl = widget.querySelector('.msr-name');
     sizeEl = widget.querySelector('.msr-size');
-    scaleEl = widget.querySelector('.msr-scale');
     pinBtn = widget.querySelector('[data-act="auto"]');
     toolsEl = widget.querySelector('.msr-tools');
     canvas = widget.querySelector('canvas');
@@ -124,16 +123,22 @@
     }
   }
 
+  // Select and drag: a tap on the label row toggles selection; while selected the whole frame can be
+  // dragged (mouse or finger). Dragging from the label row works without selecting first.
   function setupDrag() {
     let start = null;
-    widget.addEventListener('mousedown', (e) => {
+    widget.addEventListener('pointerdown', (e) => {
       if (e.button !== 0 || e.target.tagName === 'BUTTON') return;
+      const onLabel = !!e.target.closest('.msr-head');
+      if (!onLabel && !widget.classList.contains('msr-selected')) return;
       const r = widget.getBoundingClientRect();
-      start = { x: e.clientX, y: e.clientY, right: window.innerWidth - r.right, bottom: window.innerHeight - r.bottom, moved: false };
+      start = { id: e.pointerId, x: e.clientX, y: e.clientY, right: window.innerWidth - r.right, bottom: window.innerHeight - r.bottom, moved: false, onLabel };
+      widget.setPointerCapture(e.pointerId);
       e.preventDefault();
+      e.stopPropagation();
     });
-    window.addEventListener('mousemove', (e) => {
-      if (!start) return;
+    widget.addEventListener('pointermove', (e) => {
+      if (!start || e.pointerId !== start.id) return;
       const dx = e.clientX - start.x, dy = e.clientY - start.y;
       if (!start.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
       start.moved = true;
@@ -141,30 +146,33 @@
       widget.style.right = Math.max(0, start.right - dx) + 'px';
       widget.style.bottom = Math.max(0, start.bottom - dy) + 'px';
     });
-    window.addEventListener('mouseup', () => {
-      if (!start) return;
+    const end = (e) => {
+      if (!start || e.pointerId !== start.id) return;
       if (start.moved) {
         widget.classList.remove('msr-dragging');
-        saveSettings({ pos: { right: parseFloat(widget.style.right), bottom: parseFloat(widget.style.bottom) } });
-        widget.__suppressClick = true;
-        setTimeout(() => { widget.__suppressClick = false; }, 0);
+        savePosition();
+      } else if (start.onLabel) {
+        widget.classList.toggle('msr-selected');
       }
       start = null;
-    });
+    };
+    widget.addEventListener('pointerup', end);
+    widget.addEventListener('pointercancel', end);
+    document.addEventListener('pointerdown', (e) => { if (!widget.contains(e.target)) widget.classList.remove('msr-selected'); }, true);
+  }
+  function savePosition() {
+    saveSettings({ pos: { right: parseFloat(widget.style.right), bottom: parseFloat(widget.style.bottom) } });
   }
 
   function onClick(e) {
-    if (widget.__suppressClick) return;
     const act = e.target.dataset && e.target.dataset.act;
+    if (!act) return;                      // plain clicks select or drag, see setupDrag
     const refs = enabledReferences();
     const idx = refs.findIndex((r) => r.id === (pinnedId || currentId));
     if (act === 'hide') { widget.classList.add('msr-hidden'); return; }
     if (act === 'auto') { pinnedId = null; }
     else if (act === 'prev') { pinnedId = refs[Math.max(0, idx - 1)] ? refs[Math.max(0, idx - 1)].id : null; }
     else if (act === 'next') { pinnedId = refs[Math.min(refs.length - 1, idx + 1)] ? refs[Math.min(refs.length - 1, idx + 1)].id : null; }
-    else { // plain click: cycle to the next smaller reference, then back to automatic
-      if (idx >= 0 && idx < refs.length - 1) pinnedId = refs[idx + 1].id; else pinnedId = null;
-    }
     schedule(true);
   }
 
@@ -224,7 +232,6 @@
     }
     nameEl.textContent = ref.name;
     sizeEl.textContent = fmtLen(ref.width_m) + ' × ' + fmtLen(ref.height_m);
-    scaleEl.textContent = fmtScale(view.mpp) + (view.approx ? ' (' + view.mode + ', bij benadering)' : '');
     pinBtn.style.visibility = pinnedId ? '' : 'hidden';
 
     const W = settings.boxW, H = settings.boxH;

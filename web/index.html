@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="../extension/icons/icon128.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<link rel="stylesheet" href="app.css?v=1.1.3">
+<link rel="stylesheet" href="app.css?v=1.1.4">
 </head>
 <body>
 <div id="map"></div>
@@ -32,10 +32,10 @@
 
 <button type="button" id="locateBtn" data-i18n-title="locate" title="Mijn locatie" aria-label="Mijn locatie">&#9673;</button>
 
-<div id="msr-widget" data-i18n-title="panelHint" title="Tik om een kleinere referentie te kiezen">
-  <div class="msr-head"><span class="msr-name"></span><span class="msr-size"></span></div>
+<div id="msr-widget">
   <canvas></canvas>
-  <div class="msr-foot"><span class="msr-scale"></span><span class="msr-tools">
+  <div class="msr-head" data-i18n-title="panelHint" title="Tik om te selecteren, sleep om te verplaatsen"><span class="msr-name"></span><span class="msr-size"></span></div>
+  <div class="msr-foot"><span class="msr-tools">
     <button data-act="prev" data-i18n-title="larger" title="Grotere referentie">&#9664;</button>
     <button data-act="auto" class="msr-pin" data-i18n-title="backToAuto" title="Terug naar automatisch">auto</button>
     <button data-act="next" data-i18n-title="smaller" title="Kleinere referentie">&#9654;</button>
@@ -80,9 +80,9 @@
 </section>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="../extension/references.js?v=1.1.3"></script>
-<script src="../extension/geo.js?v=1.1.3"></script>
-<script src="../extension/pdok.js?v=1.1.3"></script>
-<script src="app.js?v=1.1.3"></script>
+<script src="../extension/references.js?v=1.1.4"></script>
+<script src="../extension/geo.js?v=1.1.4"></script>
+<script src="../extension/pdok.js?v=1.1.4"></script>
+<script src="app.js?v=1.1.4"></script>
 </body>
 </html>
