@@ -1,7 +1,7 @@
 # Chrome Web Store: teksten voor de vermelding
 
 Invullen op https://chrome.google.com/webstore/devconsole (eenmalig 5 dollar registratie).
-Upload: `dist/maps-schaalreferentie-1.1.0.zip`. Categorie: Productiviteit (of Tools). Taal: Nederlands.
+Upload: de nieuwste zip in `dist/` (nu `maps-schaalreferentie-1.1.6.zip`); een nieuwe versie gaat via het tabblad Package. Categorie: Productiviteit (of Tools). Taal: Nederlands.
 
 ## Naam (max 45 tekens)
 
@@ -15,7 +15,7 @@ Zie hoe groot iets is op Google Maps: Nederland, je provincie, gemeente, wijk of
 
 Je kijkt op Google Maps naar een stad aan de andere kant van de wereld, een eiland, een haven, een natuurgebied. Hoe groot is dat eigenlijk? Het schaalbalkje rechtsonder helpt weinig: "2 km" zegt niet veel als je geen gevoel hebt voor 2 km.
 
-Deze extensie tekent rechtsonder in Google Maps een vorm die je wél kent, op precies dezelfde schaal als de kaart die je op dat moment ziet.
+Deze extensie tekent rechtsonder in Google Maps een vorm die je wél kent, als rode omtrek op precies dezelfde schaal als de kaart die je op dat moment ziet. De omtrek is doorzichtig en kun je over elke plek op de kaart slepen.
 
 Ver uitgezoomd zie je een klein Nederland. Zoom je in, dan groeit Nederland mee. Past het niet meer in het venster, dan schakelt de extensie over op je provincie, daarna je gemeente, je wijk, je buurt, een vierkante kilometer en ten slotte een voetbalveld. Zo heb je altijd een maat die je kent naast wat je bekijkt.
 
@@ -24,7 +24,8 @@ Wat je kunt instellen
 - Vul je adres in: je gemeente, wijk en buurt worden opgehaald uit de CBS-kaarten (via PDOK) en krijgen een stipje op je adres. Alleen Nederlandse adressen.
 - Bewaar elk gebied ter wereld als eigen referentie: zoom erop in tot het je scherm vult en sla het op. Werkt ook buiten Nederland.
 - Zet referenties aan of uit, kies de grootte van het venster en sleep het naar waar je het wilt.
-- Klik op het venster om zelf een kleinere referentie te kiezen.
+- Tik of klik op de naam om het kader te selecteren; dan kun je het over de kaart slepen en met de pijltjes zelf een grotere of kleinere referentie kiezen.
+- Liever zonder installatie, of op je telefoon? Dezelfde referentie staat op een eigen kaart op https://herberttenhave.github.io/maps-schaalreferentie/web/
 
 Werkt in de kaart-, satelliet- en 3D-weergave van Google Maps (in 3D bij benadering).
 

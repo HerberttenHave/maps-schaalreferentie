@@ -1,8 +1,8 @@
 #msr-widget {
   position: fixed;
   z-index: 2147483000;
-  right: 64px;
-  bottom: 36px;
+  right: 90px;
+  bottom: 120px;
   background: transparent;
   pointer-events: none;            /* the map stays usable under the shape; only the text rows catch the mouse */
   font: 12px/1.3 Roboto, Arial, sans-serif;

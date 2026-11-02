@@ -1,12 +1,12 @@
 # Chrome Web Store: stappen in de Developer Dashboard
 
 Dashboard: https://chrome.google.com/webstore/devconsole
-Bestanden: zip in `dist\maps-schaalreferentie-1.1.0.zip`, screenshots in `store\screenshots\`, teksten in `store\listing.md`.
+Bestanden: nieuwste zip in `dist\` (nu `maps-schaalreferentie-1.1.6.zip`), screenshots in `store\screenshots\`, teksten in `store\listing.md`.
 
 ## 1. Item aanmaken
 
 1. Klik rechtsboven op **New item** (Nieuw item).
-2. Sleep `C:\Users\htenh\maps-schaalreferentie\dist\maps-schaalreferentie-1.1.0.zip` in het vak, of klik Browse en kies het bestand. Klik **Upload**.
+2. Sleep de nieuwste zip uit `C:\Users\htenh\maps-schaalreferentie\dist\` in het vak, of klik Browse en kies het bestand. Klik **Upload**.
 3. Het item opent met vier tabbladen links: Package, Store listing, Privacy, Distribution.
 
 ## 2. Store listing
@@ -49,3 +49,9 @@ Bestanden: zip in `dist\maps-schaalreferentie-1.1.0.zip`, screenshots in `store\
 
 - De link in `store\whatsapp.md`, de README en de twee concept-mails vervangen door de store-link.
 - Nieuwe versie uitbrengen: versienummer in `extension\manifest.json` ophogen, `tools\package.ps1` draaien, op het tabblad Package de nieuwe zip uploaden, opnieuw indienen.
+
+## Nieuwe versie na goedkeuring (1.1.0 is ingediend, 1.1.6 staat klaar)
+
+1. Open het item in de dashboard, tabblad **Package**, klik **Upload new package** en kies de nieuwste zip uit `dist\`.
+2. Tabblad **Store listing**: vervang de twee screenshots door de nieuwe uit `store\screenshots\` (transparante omtrek) en plak de bijgewerkte omschrijving uit `store\listing.md`.
+3. **Submit for review**. Een update wordt meestal sneller beoordeeld dan een eerste versie.
