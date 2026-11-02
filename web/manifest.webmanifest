@@ -1,0 +1,13 @@
+{
+  "name": "Maps schaalreferentie",
+  "short_name": "Schaal",
+  "description": "Een vorm die je kent op dezelfde schaal als de kaart, waar ook ter wereld.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "../extension/icons/icon48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "../extension/icons/icon128.png", "sizes": "128x128", "type": "image/png" }
+  ]
+}

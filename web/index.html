@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<title>Maps schaalreferentie</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Zie hoe groot iets is, waar ook ter wereld: Nederland, je provincie, gemeente, wijk, buurt, een vierkante kilometer of een voetbalveld op dezelfde schaal als de kaart.">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="Maps schaalreferentie">
+<meta property="og:description" content="Nederland, je provincie, gemeente, wijk of buurt naast elke plek op de wereldkaart, op dezelfde schaal. Werkt op elke telefoon, zonder installatie.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://herberttenhave.github.io/maps-schaalreferentie/web/">
+<meta property="og:image" content="https://herberttenhave.github.io/maps-schaalreferentie/store/screenshots/1-nederland-japan.png">
+<link rel="icon" href="../extension/icons/icon48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="../extension/icons/icon128.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="map"></div>
+
+<div class="topbar">
+  <form id="searchForm" autocomplete="off">
+    <input id="searchInput" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Zoek een plaats of adres" enterkeyhint="search">
+    <button type="submit" id="searchBtn" data-i18n-title="search" title="Zoeken" aria-label="Zoeken">&#128269;</button>
+  </form>
+  <button type="button" id="langBtn" class="pill" title="English">EN</button>
+  <button type="button" id="helpBtn" class="pill" data-i18n-title="whatIs" title="Wat is dit?" aria-label="Wat is dit?">?</button>
+</div>
+<div id="searchMsg" class="toast" hidden></div>
+
+<button type="button" id="locateBtn" data-i18n-title="locate" title="Mijn locatie" aria-label="Mijn locatie">&#9673;</button>
+
+<div id="msr-widget" data-i18n-title="panelHint" title="Tik om een kleinere referentie te kiezen">
+  <div class="msr-head"><span class="msr-name"></span><span class="msr-size"></span></div>
+  <canvas></canvas>
+  <div class="msr-foot"><span class="msr-scale"></span><span class="msr-tools">
+    <button data-act="prev" data-i18n-title="larger" title="Grotere referentie">&#9664;</button>
+    <button data-act="auto" class="msr-pin" data-i18n-title="backToAuto" title="Terug naar automatisch">auto</button>
+    <button data-act="next" data-i18n-title="smaller" title="Kleinere referentie">&#9654;</button>
+  </span></div>
+</div>
+
+<div id="sheetBackdrop" hidden></div>
+<section id="sheet" hidden aria-labelledby="sheetTitle">
+  <div class="sheet-head">
+    <h1 id="sheetTitle">Maps schaalreferentie</h1>
+    <button type="button" id="closeBtn" class="pill" data-i18n-title="close" title="Sluiten" aria-label="Sluiten">&#10005;</button>
+  </div>
+  <div class="sheet-body">
+    <h2 data-i18n="whatIs">Wat is dit?</h2>
+    <p data-i18n="aboutText"></p>
+    <p class="muted" data-i18n="aboutPrivacy"></p>
+    <p><a id="extLink" href="https://github.com/HerberttenHave/maps-schaalreferentie" target="_blank" rel="noopener" data-i18n="extensionLink"></a></p>
+    <button type="button" id="goBtn" class="primary" data-i18n="toMap">Naar de kaart</button>
+
+    <h2 data-i18n="myAddress">Mijn adres (Nederland)</h2>
+    <p class="muted" data-i18n="addressHelp"></p>
+    <div id="addrForm" class="row-form">
+      <input id="addrInput" type="text" data-i18n-placeholder="addressPlaceholder" placeholder="Straat huisnummer, plaats" autocomplete="street-address" enterkeyhint="done">
+      <button type="button" id="addrBtn" class="primary" data-i18n="set">Instellen</button>
+    </div>
+    <div id="addrSet" hidden>
+      <span id="addrLabel"></span>
+      <button type="button" id="addrClear" class="link" data-i18n="clear">Wissen</button>
+    </div>
+    <div id="addrMsg" class="msg" aria-live="polite"></div>
+
+    <h2 data-i18n="references">Referenties</h2>
+    <div id="refs"></div>
+
+    <h2 data-i18n="language">Taal</h2>
+    <div class="row-form">
+      <button type="button" class="langPick" data-lang="nl">Nederlands</button>
+      <button type="button" class="langPick" data-lang="en">English</button>
+    </div>
+    <p class="muted small" data-i18n="sources"></p>
+  </div>
+</section>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="../extension/references.js"></script>
+<script src="../extension/geo.js"></script>
+<script src="../extension/pdok.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

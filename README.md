@@ -1,6 +1,6 @@
 # Maps schaalreferentie / Maps scale reference
 
-**Nederlands** hieronder, **English** further down.
+**Nederlands** hieronder, **English** further down. Webversie voor telefoon / web version for phones: **https://herberttenhave.github.io/maps-schaalreferentie/**
 
 ![Nederland naast Japan](store/screenshots/1-nederland-japan.png)
 
@@ -9,6 +9,10 @@
 ## Nederlands
 
 Chrome-extensie die rechtsonder in Google Maps een vorm tekent die je kent, op precies dezelfde schaal als de kaart die je op dat moment ziet. Ver uitgezoomd zie je een klein Nederland. Zoom je in, dan groeit Nederland mee tot het niet meer past, en schakelt de extensie over op je provincie, gemeente, wijk, buurt, een vierkante kilometer en ten slotte een voetbalveld. Zo heb je altijd een maat die je kent naast wat je bekijkt.
+
+### Op je telefoon: de webversie
+
+Geen installatie nodig. Open **https://herberttenhave.github.io/maps-schaalreferentie/** op je telefoon (of computer). Je krijgt een eigen kaart (OpenStreetMap) met rechtsonder hetzelfde venster: Nederland, je provincie, gemeente, wijk en buurt, een vierkante kilometer en een voetbalveld, op de schaal van de kaart. Zoeken wereldwijd, knop voor je eigen locatie, tik op het venster voor een kleinere referentie. Je adres vul je in onder **?** rechtsboven; het blijft op je telefoon. Nederlands en Engels. Geen cookies, geen analytics. De link kun je zo doorsturen in WhatsApp.
 
 ### Installeren (Chrome, Edge of Brave; Windows en Mac)
 
@@ -56,6 +60,10 @@ A Chrome extension that draws a shape you know in the bottom-right corner of Goo
 
 The built-in shapes are Dutch (the Netherlands and its provinces; address lookup covers Dutch addresses only), but you can save any area in the world as your own reference: zoom in until it fills the screen and store it from the popup.
 
+### On your phone: the web version
+
+No installation needed. Open **https://herberttenhave.github.io/maps-schaalreferentie/** on your phone (or computer). You get a map of its own (OpenStreetMap) with the same panel bottom right: the Netherlands, your province, municipality, district and neighbourhood, one square kilometre and a football pitch, at the scale of the map. Worldwide search, a button for your own location, tap the panel for a smaller reference. Enter your Dutch address under **?** top right; it stays on your phone. Dutch and English. No cookies, no analytics. The link is easy to forward in WhatsApp.
+
 ### Install (Chrome, Edge or Brave; Windows and Mac)
 
 1. Download the zip: **https://github.com/HerberttenHave/maps-schaalreferentie/releases/latest**
@@ -95,6 +103,9 @@ extension/           de extensie zelf (Manifest V3) / the extension itself
   geo.js             projectie, vereenvoudiging, punt-in-polygoon
   pdok.js            adres en omtrekken ophalen bij PDOK
   popup.html/.js     instellingen, adres, eigen uitsnedes
+web/                 webversie voor telefoon (GitHub Pages) / web version for phones
+  index.html, app.js, app.css   Leaflet + OpenStreetMap, zelfde venster; laadt ../extension/references.js, geo.js, pdok.js
+index.html           stuurt door naar web/ / redirects to web/
 tools/
   build_references.py  bouwt references.js uit PDOK GeoJSON (Python 3, shapely)
   test_pdok.js         test van de adresstroom in Node
