@@ -301,6 +301,7 @@
   const canvas = widget.querySelector('canvas');
   const ctx = canvas.getContext('2d');
 
+  if (new URLSearchParams(location.search).get('ui') === '0') document.body.classList.add('no-ui');   // ?ui=0 hides the controls (screenshots)
   function sizePanel() {
     // ?panel=600 forces a larger frame (big screens, screenshots); otherwise it follows the screen width
     const forced = +(new URLSearchParams(location.search).get('panel') || 0);

@@ -60,7 +60,7 @@ async function main() {
     localStorage.setItem('msr.pos', JSON.stringify({ right: ${Math.round((W - PANEL) / 2)}, bottom: ${Math.round((H - frameH) / 2)} })); 'ok'`);
 
   for (const s of SCENES) {
-    await send('Page.navigate', { url: `${BASE}?panel=${PANEL}&s=${Date.now()}#${s.lat},${s.lng},${s.zoom}z` });
+    await send('Page.navigate', { url: `${BASE}?panel=${PANEL}&ui=0&s=${Date.now()}#${s.lat},${s.lng},${s.zoom}z` });
     await sleep(6000);   // tiles
     const name = await evaluate(`document.querySelector('.msr-name') && document.querySelector('.msr-name').textContent`);
     const r = await send('Page.captureScreenshot', { format: 'png' });

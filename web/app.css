@@ -128,3 +128,6 @@ button.link { border: 0; background: transparent; color: #1a73e8; font: inherit;
 #refs input[type=checkbox] { width: 18px; height: 18px; accent-color: #c2410c; }
 #refs details { padding: 6px 0; }
 #refs summary { cursor: pointer; color: #5f6368; }
+
+/* ?ui=0: map and reference only, for screenshots */
+body.no-ui #searchForm, body.no-ui #langBtn, body.no-ui #helpBtn, body.no-ui #locateBtn, body.no-ui .leaflet-control-zoom, body.no-ui #searchMsg { display: none !important; }
