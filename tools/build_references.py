@@ -52,6 +52,27 @@ def to_local(geom, tol_m):
     }
 
 
+def fetch_amsterdam_centrum():
+    import urllib.parse
+    import urllib.request
+    flt = ('<Filter xmlns="http://www.opengis.net/fes/2.0"><PropertyIsEqualTo>'
+           '<ValueReference>gemeentecode</ValueReference><Literal>GM0363</Literal>'
+           '</PropertyIsEqualTo></Filter>')
+    q = urllib.parse.urlencode({"service": "WFS", "version": "2.0.0", "request": "GetFeature",
+                                "typeNames": "wijkenbuurten:wijken", "outputFormat": "json",
+                                "srsName": "EPSG:4326", "FILTER": flt})
+    url = "https://service.pdok.nl/cbs/wijkenbuurten/2024/wfs/v1_0?" + q
+    with urllib.request.urlopen(url, timeout=120) as r:
+        fc = json.load(r)
+    feats = [f for f in fc["features"]
+             if f["properties"].get("water") != "JA" and str(f["properties"].get("wijkcode", "")).startswith("WK0363A")]  # stadsdeel Centrum
+    names = sorted(f["properties"]["wijknaam"] for f in feats)
+    if not feats:
+        raise SystemExit("Amsterdam Centrum wijken not found")
+    print("Amsterdam wijken:", ", ".join(names))
+    return unary_union([shape(f["geometry"]) for f in feats])
+
+
 def build(dl, out, factor=1.0):
     dl = Path(dl)
     refs = []
@@ -72,6 +93,11 @@ def build(dl, out, factor=1.0):
     for f in sorted(prov["features"], key=lambda f: f["properties"]["statnaam"]):
         p = f["properties"]
         add("prov-" + p["statcode"], p["statnaam"], shape(f["geometry"]), 120, src)
+
+    # Amsterdam city centre (the canal ring inside the Singelgracht): CBS wijken Centrum-West and
+    # Centrum-Oost of gemeente Amsterdam, fetched live from the PDOK WFS with an OGC filter.
+    add("amsterdam-centrum", "Amsterdam Centrum", fetch_amsterdam_centrum(), 6,
+        "CBS Wijk- en buurtkaart 2024, de tien wijken van stadsdeel Centrum (PDOK)")
 
     # Generic squares fill the gaps between the Netherlands and 1 km² for users without an address
     # (and outside the Netherlands).
