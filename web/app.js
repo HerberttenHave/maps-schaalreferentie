@@ -423,8 +423,11 @@
       }
       if (ref.lines) for (const line of ref.lines) line.forEach((p, i) => { if (i === 0) ctx.moveTo(X(p[0]), Y(p[1])); else ctx.lineTo(X(p[0]), Y(p[1])); });
     };
-    trace(); ctx.lineWidth = tiny ? 3 : 4.5; ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke();
-    trace(); ctx.lineWidth = tiny ? 1 : 2; ctx.strokeStyle = '#d32f2f'; ctx.stroke();
+    // Line weight follows the drawn size, so a small Netherlands stays an outline instead of a red blob.
+    const px = Math.max(ref.width_m, ref.height_m) * s;
+    const lw = px < 40 ? 0.8 : px < 90 ? 1.2 : px < 160 ? 1.6 : 2;
+    trace(); ctx.lineWidth = lw + (px < 40 ? 1.2 : 2.5); ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke();
+    trace(); ctx.lineWidth = lw; ctx.strokeStyle = '#d32f2f'; ctx.stroke();
     const marker = ref.marker || markers[ref.id];
     if (marker && !tiny) {
       ctx.beginPath();
