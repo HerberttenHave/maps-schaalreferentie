@@ -14,7 +14,7 @@ body {
   background: #e5e3df;
   -webkit-tap-highlight-color: transparent;
 }
-#map { position: fixed; inset: 0; z-index: 0; }
+#map { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; }   /* explicit size: the Google Maps API resets position to relative */
 /* on Google Maps the shape and the locate button sit above Google's own bottom-right links */
 body.map-google #msr-widget { bottom: calc(var(--safe-b) + var(--gap) + 24px); }
 body.map-google #locateBtn { bottom: calc(var(--safe-b) + var(--panel-h) + 2 * var(--gap) + 24px); }
