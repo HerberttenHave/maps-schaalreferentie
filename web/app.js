@@ -175,7 +175,7 @@
     boxW = Math.min(260, Math.max(180, Math.floor(window.innerWidth * 0.6)));
     boxH = Math.round(boxW * 200 / 260);
     document.documentElement.style.setProperty('--panel-w', boxW + 'px');
-    document.documentElement.style.setProperty('--panel-h', (boxH + 42) + 'px');
+    document.documentElement.style.setProperty('--panel-h', (boxH + 54) + 'px');
   }
   window.addEventListener('resize', () => { sizePanel(); schedule(); });
   sizePanel();
