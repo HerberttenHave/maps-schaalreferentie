@@ -19,7 +19,6 @@ const SCENES = [
   { name: 'nederland-over-san-francisco', lat: 37.6, lng: -122.0, zoom: 7 },
   { name: 'nederland-over-londen', lat: 51.7, lng: -0.8, zoom: 7 },
   { name: 'nederland-over-tokio', lat: 35.9, lng: 139.5, zoom: 7 },
-  { name: 'nederland-over-israel', lat: 32.0, lng: 35.0, zoom: 7 },
   { name: 'amsterdam-centrum-over-manhattan', lat: 40.765, lng: -73.975, zoom: 13 },
   { name: 'amsterdam-centrum-over-parijs', lat: 48.858, lng: 2.345, zoom: 13 },
 ];
