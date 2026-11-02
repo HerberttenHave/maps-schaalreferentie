@@ -302,7 +302,9 @@
   const ctx = canvas.getContext('2d');
 
   function sizePanel() {
-    boxW = Math.min(260, Math.max(180, Math.floor(window.innerWidth * 0.6)));
+    // ?panel=600 forces a larger frame (big screens, screenshots); otherwise it follows the screen width
+    const forced = +(new URLSearchParams(location.search).get('panel') || 0);
+    boxW = forced >= 120 ? Math.min(forced, window.innerWidth - 20) : Math.min(260, Math.max(180, Math.floor(window.innerWidth * 0.6)));
     boxH = Math.round(boxW * 200 / 260);
     document.documentElement.style.setProperty('--panel-w', boxW + 'px');
     document.documentElement.style.setProperty('--panel-h', (boxH + 54) + 'px');
