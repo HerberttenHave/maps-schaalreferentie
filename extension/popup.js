@@ -134,6 +134,7 @@ async function setAddress() {
     local = { ...local, areas, markers, address: { label: geo.label, provId: prov ? prov.id : null } };
     await new Promise((res) => chrome.storage.local.set({ areas, markers, address: local.address }, res));
     if (prov) setDisabled(prov.id, false);
+    setDisabled('amsterdam-centrum', true);   // your own city replaces the Amsterdam example
     msg.textContent = 'Ingesteld: ' + areas.map((a) => a.name).join(', ') + (prov ? ', ' + prov.name : '') + '.';
     $('addrInput').value = '';
     renderAddress();
@@ -148,6 +149,7 @@ async function setAddress() {
 function clearAddress() {
   local = { ...LOCAL_DEFAULTS };
   chrome.storage.local.remove(['areas', 'markers', 'address']);
+  setDisabled('amsterdam-centrum', false);
   $('addrMsg').textContent = '';
   renderAddress();
   renderRefs();

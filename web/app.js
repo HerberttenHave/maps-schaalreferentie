@@ -373,10 +373,27 @@
   })();
   setupDrag();
 
+
+  // Web Mercator stretches the map towards the poles. The scale is computed at the latitude under the
+  // frame itself, not at the map centre: on a tall phone zoomed out, the centre can lie near the pole
+  // while the frame sits over the Netherlands.
+  function latAtOffset(centerLat, zoom, dyPx) {   // dyPx positive = below the centre
+    const scale = 256 * Math.pow(2, zoom) / (2 * Math.PI);
+    const y = Math.log(Math.tan(Math.PI / 4 + centerLat * Math.PI / 360)) * scale - dyPx;
+    const lat = (2 * Math.atan(Math.exp(y / scale)) - Math.PI / 2) * 180 / Math.PI;
+    return Math.max(-85, Math.min(85, lat));
+  }
+  function frameMpp() {
+    const zoom = Math.log2(156543.03392 * Math.cos(view.lat * Math.PI / 180) / view.mpp);
+    const r = canvas.getBoundingClientRect();
+    const dy = (r.top + r.height / 2) - window.innerHeight / 2;
+    return 156543.03392 * Math.cos(latAtOffset(view.lat, zoom, dy) * Math.PI / 180) / Math.pow(2, zoom);
+  }
   function draw() {
     raf = 0;
     if (!view) return;
-    const ref = chooseReference(view.mpp);
+    const mpp = frameMpp();
+    const ref = chooseReference(mpp);
     if (!ref) { widget.style.visibility = 'hidden'; return; }
     widget.style.visibility = '';
 
@@ -399,7 +416,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
 
-    const s = 1 / view.mpp;                   // px per metre
+    const s = 1 / mpp;                        // px per metre at the frame's own latitude
     const b = ref.bbox;                       // [minx, miny, maxx, maxy] metres
     const tooBig = ref.width_m * s > W || ref.height_m * s > H;
     const cx = W / 2 - ((b[0] + b[2]) / 2) * s;
@@ -572,6 +589,7 @@
       address = { label: geo.label, provId: prov ? prov.id : null, lat: geo.lat, lon: geo.lon };
       save(KEYS.areas, areas); save(KEYS.markers, markers); save(KEYS.address, address);
       for (const a of areas) disabled.delete(a.id);
+      disabled.add('amsterdam-centrum');       // your own city replaces the Amsterdam example
       if (prov) setDisabled(prov.id, false); else save(KEYS.disabled, [...disabled]);
       pinnedId = null;
       msg.textContent = t('setTo') + areas.map((a) => a.name).join(', ') + (prov ? ', ' + prov.name : '') + '.';
@@ -588,6 +606,7 @@
   function clearAddress() {
     areas = []; markers = {}; address = null;
     save(KEYS.areas, null); save(KEYS.markers, null); save(KEYS.address, null);
+    setDisabled('amsterdam-centrum', false);
     $('addrMsg').textContent = '';
     renderAddress();
     renderRefs();
