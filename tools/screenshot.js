@@ -126,12 +126,42 @@ async function main() {
     }
   }
 
+  // Own world references through the real popup: MSR_PLACE="Zuid-Afrika|Texel". The first should be a country
+  // (from world.json), a later one may need OpenStreetMap; the map check expects South Africa to be listed.
+  const placeList = (process.env.MSR_PLACE || '').split('|').map((x) => x.trim()).filter(Boolean);
+  if (placeList.length) {
+    await send('Page.navigate', { url: 'chrome://extensions-internals/' });
+    await sleep(1500);
+    const txt = String(await evaluate('document.body.innerText'));
+    const m = /"id": "([a-p]{32})"(?:(?!"id": )[\s\S])*?"name": "Maps schaalreferentie"/.exec(txt);
+    await send('Page.navigate', { url: `chrome-extension://${m ? m[1] : extensionId(EXT)}/popup.html` });
+    await sleep(1500);
+    results.places = [];
+    for (const q of placeList) {
+      const r = await evaluate(`(async () => {
+        document.getElementById('placeInput').value = ${JSON.stringify(q)};
+        document.getElementById('placeBtn').click();
+        for (let i = 0; i < 60; i++) { await new Promise((r) => setTimeout(r, 500)); const t = document.getElementById('placeMsg').textContent; if (t && !t.includes('opzoeken...')) return t; }
+        return 'timeout';
+      })()`);
+      console.log('popup place', q + ':', r);
+      results.places.push(r);
+      await sleep(1200);   // Nominatim allows one request per second
+    }
+    results.stored = await evaluate(`new Promise((r) => chrome.storage.local.get(null, (l) => r((l.places || []).map((a) => a.name + ' ' + Math.round(a.width_m / 1000) + 'x' + Math.round(a.height_m / 1000) + ' km'))))`);
+    console.log('stored places:', results.stored);
+    results.placeMap = await openMaps('https://www.google.com/maps/@-29,24.7,3z?hl=nl');
+    console.log('widget (southern Africa, 3z):', results.placeMap);
+    if (results.placeMap) await shot('3-eigen-referentie.png');
+  }
+
   ws.close();
   chrome.kill();
   if (process.platform === 'win32') { try { require('child_process').execSync(`taskkill /PID ${chrome.pid} /T /F`, { stdio: 'ignore' }); } catch (e) { /* already gone */ } }
   await sleep(500);
   try { fs.rmSync(profile, { recursive: true, force: true }); fs.rmSync(EXT, { recursive: true, force: true }); } catch (e) { /* may still be locked */ }
-  const ok = !!results.nl && (!address || (results.areas && results.areas.length === 3 && !!results.city));
+  const ok = !!results.nl && (!address || (results.areas && results.areas.length === 3 && !!results.city))
+    && (!placeList.length || (results.stored && results.stored.length === placeList.length && /Zuid-Afrika/.test(results.placeMap || '')));
   console.log(ok ? 'E2E OK' : 'E2E FAILED');
   process.exit(ok ? 0 : 1);
 }

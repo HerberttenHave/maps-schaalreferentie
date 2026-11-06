@@ -14,7 +14,7 @@ Chrome-extensie die rechtsonder in Google Maps een vorm tekent die je kent, op p
 
 Geen installatie nodig. Open **https://herberttenhave.github.io/maps-schaalreferentie/** op je telefoon (of computer). Je krijgt een eigen kaart (OpenStreetMap) met rechtsonder hetzelfde venster: Nederland, je provincie, gemeente, wijk en buurt, een vierkante kilometer en een voetbalveld, op de schaal van de kaart. Zoeken wereldwijd, knop voor je eigen locatie, tik op het venster voor een kleinere referentie. Je adres vul je in onder **?** rechtsboven; het blijft op je telefoon. Nederlands en Engels. Geen cookies, geen analytics. De link kun je zo doorsturen in WhatsApp.
 
-**Eigen referentie, hele wereld.** Onder **?** kun je in de webversie ook elk land, werelddeel, regio, stad of eiland als referentie toevoegen: typ bijvoorbeeld Groenland, Zuid-Afrika, Europa, Texel of Bali. De omtrek komt direct op de kaart te staan en blijft bewaard op je telefoon. Landen en werelddelen komen uit Natural Earth (kustlijn, zonder territoriale wateren en zonder verre overzeese gebieden), al het andere uit OpenStreetMap. Als deellink: `web/?ref=Zuid-Afrika#72,-41,3z` legt Zuid-Afrika midden op het scherm over Groenland (`ref` is de naam, daarna breedtegraad, lengtegraad en zoom van de kaart); verschuif de kaart en kopieer de adresbalk voor je eigen voorbeeld.
+**Eigen referentie, hele wereld.** Onder **?** in de webversie, en in de popup van de extensie, kun je ook elk land, werelddeel, regio, stad of eiland als referentie toevoegen: typ bijvoorbeeld Groenland, Zuid-Afrika, Europa, Texel of Bali. De omtrek komt direct op de kaart te staan en blijft bewaard op je eigen apparaat. Landen en werelddelen komen uit Natural Earth (kustlijn, zonder territoriale wateren en zonder verre overzeese gebieden), al het andere uit OpenStreetMap. Als deellink: `web/?ref=Zuid-Afrika#72,-41,3z` legt Zuid-Afrika midden op het scherm over Groenland (`ref` is de naam, daarna breedtegraad, lengtegraad en zoom van de kaart); verschuif de kaart en kopieer de adresbalk voor je eigen voorbeeld.
 
 **Google Maps als ondergrond.** De webversie toont OpenStreetMap. Wie liever Google Maps ziet (kaart of satelliet) kan dat kiezen onder **?** zodra er een Google Maps API-sleutel in `web/config.js` staat; zonder sleutel wordt niets van Google geladen. Hoe je die sleutel aanmaakt en wat het kost staat in [store/google-maps-sleutel.md](store/google-maps-sleutel.md).
 
@@ -38,7 +38,7 @@ Safari en Firefox worden niet ondersteund.
 
 ### Privacy
 
-Geen analytics, geen cookies, geen verbinding met de maker. Alleen de adresopzoeking gaat naar PDOK, en alleen als je zelf een adres invult. Volledige tekst: [store/privacy.md](store/privacy.md).
+Geen analytics, geen cookies, geen verbinding met de maker. Alleen wat je zelf opzoekt gaat de deur uit: een adres naar PDOK, en de naam van een eigen referentie die geen land of werelddeel is naar OpenStreetMap (Nominatim). Volledige tekst: [store/privacy.md](store/privacy.md).
 
 ### Hoe de schaal wordt bepaald
 
@@ -68,7 +68,7 @@ The built-in shapes are Dutch (the Netherlands and its provinces; address lookup
 
 No installation needed. Open **https://herberttenhave.github.io/maps-schaalreferentie/** on your phone (or computer). You get a map of its own (OpenStreetMap) with the same panel bottom right: the Netherlands, your province, municipality, district and neighbourhood, one square kilometre and a football pitch, at the scale of the map. Worldwide search, a button for your own location, tap the panel for a smaller reference. Enter your Dutch address under **?** top right; it stays on your phone. Dutch and English. No cookies, no analytics. The link is easy to forward in WhatsApp.
 
-**Your own reference, worldwide.** Under **?** the web version also lets you add any country, continent, region, city or island as a reference: type for example Greenland, South Africa, Europe, Texel or Bali. The outline appears on the map at once and is stored on your phone. Countries and continents come from Natural Earth (coastline, without territorial waters and without far overseas territories), everything else from OpenStreetMap. As a share link: `web/?ref=South Africa#72,-41,3z` lays South Africa in the middle of the screen over Greenland (`ref` is the name, followed by latitude, longitude and zoom of the map); pan the map and copy the address bar for your own example.
+**Your own reference, worldwide.** Under **?** in the web version, and in the popup of the extension, you can add any country, continent, region, city or island as a reference: type for example Greenland, South Africa, Europe, Texel or Bali. The outline appears on the map at once and is stored on your phone. Countries and continents come from Natural Earth (coastline, without territorial waters and without far overseas territories), everything else from OpenStreetMap. As a share link: `web/?ref=South Africa#72,-41,3z` lays South Africa in the middle of the screen over Greenland (`ref` is the name, followed by latitude, longitude and zoom of the map); pan the map and copy the address bar for your own example.
 
 **Google Maps as the base map.** The web version shows OpenStreetMap. Visitors who prefer Google Maps (roadmap or satellite) can pick it under **?** once a Google Maps API key is set in `web/config.js`; without a key nothing from Google is loaded. How to create the key and what it costs is described (in Dutch) in [store/google-maps-sleutel.md](store/google-maps-sleutel.md).
 
@@ -94,7 +94,7 @@ The interface is in Dutch for now.
 
 ### Privacy
 
-No analytics, no cookies, no connection to the author. The only network traffic is the address lookup at PDOK, and only when you enter an address yourself. Full text (Dutch): [store/privacy.md](store/privacy.md).
+No analytics, no cookies, no connection to the author. Only what you look up yourself leaves your computer: an address goes to PDOK, and the name of an own reference that is not a country or continent goes to OpenStreetMap (Nominatim). Full text (Dutch): [store/privacy.md](store/privacy.md).
 
 ### How the scale is derived
 
@@ -110,14 +110,15 @@ extension/           de extensie zelf (Manifest V3) / the extension itself
   references.js      gegenereerde vormen in meters (x oost, y noord)
   geo.js             projectie, vereenvoudiging, punt-in-polygoon
   pdok.js            adres en omtrekken ophalen bij PDOK
+  places.js          eigen referenties wereldwijd: opzoeken (world.json, Nominatim) en projectie
+  world.json         landen en werelddelen uit Natural Earth (gebouwd door tools/build_world.py)
   popup.html/.js     instellingen, adres, eigen uitsnedes
 web/                 webversie voor telefoon (GitHub Pages) / web version for phones
   index.html, app.js, app.css   Leaflet + OpenStreetMap (of Google Maps via config.js), zelfde venster; laadt ../extension/references.js, geo.js, pdok.js
-  places.js, world.json         eigen referenties wereldwijd: opzoeken (Natural Earth, Nominatim) en projectie
 index.html           stuurt door naar web/ / redirects to web/
 tools/
   build_references.py  bouwt references.js uit PDOK GeoJSON (Python 3, shapely)
-  build_world.py       bouwt web/world.json uit Natural Earth (landen en werelddelen)
+  build_world.py       bouwt extension/world.json uit Natural Earth (landen en werelddelen)
   test_pdok.js         test van de adresstroom in Node
   screenshot.js        end-to-end test en store-screenshots in headless Edge
   package.ps1          maakt dist/maps-schaalreferentie-<versie>.zip

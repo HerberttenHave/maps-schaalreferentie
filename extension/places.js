@@ -1,5 +1,5 @@
-// Worldwide place lookup for "own references" in the web version.
-// Countries and continents come from web/world.json (Natural Earth land outlines, so without the
+// Worldwide place lookup for "own references", shared by the extension popup and the web version.
+// Countries and continents come from world.json (Natural Earth land outlines, so without the
 // territorial waters that OpenStreetMap country borders include); everything else (regions, cities,
 // islands, lakes, parks) comes from OpenStreetMap through Nominatim.
 // project() returns the same structure as MSR_GEO.projectGeometries, but uses an azimuthal equidistant

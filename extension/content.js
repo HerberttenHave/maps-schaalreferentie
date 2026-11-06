@@ -9,7 +9,7 @@
     enabled: true, boxW: 260, boxH: 200, custom: [], pos: null,
     disabled: BUILTIN.filter((r) => r.id.startsWith('prov-')).map((r) => r.id),
   };
-  const LOCAL_DEFAULTS = { areas: [], markers: {} };   // address-based areas live in storage.local only
+  const LOCAL_DEFAULTS = { areas: [], markers: {}, places: [] };   // address areas and own world references live in storage.local only
   const PAD = 6;
   const storage = (typeof chrome !== 'undefined' && chrome.storage) ? chrome.storage.sync : null;
   const localStore = (typeof chrome !== 'undefined' && chrome.storage) ? chrome.storage.local : null;
@@ -50,7 +50,7 @@
   }
 
   function allReferences() {
-    return BUILTIN.concat(local.areas || [], settings.custom || []);
+    return BUILTIN.concat(local.areas || [], local.places || [], settings.custom || []);
   }
   function enabledReferences() {
     const off = new Set(settings.disabled || []);
@@ -346,6 +346,11 @@
         const custom = (settings.custom || []).concat([ref]);
         saveSettings({ custom });
         reply({ ok: true, ref: { id: ref.id, name, width_m: w, height_m: h } });
+      } else if (msg.type === 'msr:pin') {      // the popup added an own reference: show it at once
+        pinnedId = msg.id || null;
+        if (widget) widget.classList.remove('msr-hidden');
+        schedule(true);
+        reply({ ok: true });
       } else if (msg.type === 'msr:show') {
         widget.classList.remove('msr-hidden');
         reply({ ok: true });

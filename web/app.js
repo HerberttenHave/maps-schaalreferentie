@@ -14,7 +14,7 @@
       locate: 'Mijn locatie', panelHint: 'Tik om te selecteren, sleep om te verplaatsen',
       larger: 'Grotere referentie', smaller: 'Kleinere referentie', backToAuto: 'Terug naar automatisch',
       aboutText: 'Rechtsonder staat een vorm die je kent: Nederland, je provincie, gemeente, wijk of buurt, een vierkante kilometer of een voetbalveld, op precies dezelfde schaal als de kaart. Zoom in of uit en de vorm groeit mee. Past hij niet meer, dan springt het venster naar de volgende. Zo zie je overal ter wereld hoe groot iets is. Tik op het venster om zelf een kleinere referentie te kiezen.',
-      aboutPrivacy: 'Geen cookies, geen tracking. Je instellingen en je adres blijven op je telefoon; alleen de opzoeking gaat naar PDOK, de geo-dienst van de overheid.',
+      aboutPrivacy: 'Geen cookies, geen tracking. Je instellingen, adres en eigen referenties blijven op je telefoon. Alleen wat je zelf opzoekt gaat de deur uit: je adres naar PDOK, de geo-dienst van de overheid, en zoekopdrachten en eigen referenties naar OpenStreetMap.',
       extensionLink: 'Google Maps op een computer? Er is ook een Chrome-extensie (gratis, open source).',
       toMap: 'Naar de kaart', myAddress: 'Mijn adres (Nederland)',
       addressHelp: 'Vul je adres in voor je provincie, gemeente, wijk en buurt, met een blauw stipje op je huis.',
@@ -40,7 +40,7 @@
       locate: 'My location', panelHint: 'Tap to select, drag to move',
       larger: 'Larger reference', smaller: 'Smaller reference', backToAuto: 'Back to automatic',
       aboutText: 'Bottom right you see a shape you know: the Netherlands, a province, municipality, district or neighbourhood, one square kilometre or a football pitch, at exactly the scale of the map. Zoom in or out and the shape grows with the map. When it no longer fits, the panel switches to the next one. So you can see how big anything is, anywhere in the world. Tap the panel to pick a smaller reference yourself.',
-      aboutPrivacy: 'No cookies, no tracking. Your settings and address stay on your phone; only the lookup goes to PDOK, the Dutch national geo service.',
+      aboutPrivacy: 'No cookies, no tracking. Your settings, address and own references stay on your phone. Only what you look up yourself leaves it: your address goes to PDOK, the Dutch national geo service, and searches and own references go to OpenStreetMap.',
       extensionLink: 'Using Google Maps on a computer? There is also a Chrome extension (free, open source).',
       toMap: 'To the map', myAddress: 'My address (Netherlands)',
       addressHelp: 'Enter a Dutch address to get your province, municipality, district and neighbourhood, with a blue dot on your home.',
@@ -662,7 +662,7 @@
     msg.textContent = t('placeSearching');
     $('placeBtn').disabled = true;
     try {
-      const found = await window.MSR_PLACES.find(q, lang, 'world.json?v=1');
+      const found = await window.MSR_PLACES.find(q, lang, '../extension/world.json?v=1');
       const shape = found && window.MSR_PLACES.project(found.geoms, GEO);
       if (!shape) {
         msg.className = 'msg err';
@@ -707,7 +707,7 @@
   // Share link (?ref=...): look the reference up, pin it for this visit and show it centred.
   async function pinFromQuery() {
     try {
-      const found = await window.MSR_PLACES.find(REF_QUERY, lang, 'world.json?v=1');
+      const found = await window.MSR_PLACES.find(REF_QUERY, lang, '../extension/world.json?v=1');
       const shape = found && window.MSR_PLACES.project(found.geoms, GEO);
       if (shape) {
         const ref = { id: 'place-' + found.key, name: found.name, custom: true, source: found.source, ...shape };

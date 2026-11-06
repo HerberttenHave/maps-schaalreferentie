@@ -1,7 +1,8 @@
-"""Builds web/world.json: land outlines of countries and continents for the "own reference" lookup
-in the web version. Coordinates stay in lon/lat; web/places.js projects them when a place is added.
+"""Builds extension/world.json: land outlines of countries and continents for the "own reference" lookup
+in the extension popup and the web version. Coordinates stay in lon/lat; extension/places.js projects
+them when a place is added.
 
-usage: python -I tools/build_world.py <dir> web/world.json
+usage: python -I tools/build_world.py <dir> extension/world.json
 
 <dir> holds two files from Natural Earth (public domain),
 https://github.com/nvkelso/natural-earth-vector/tree/master/geojson :

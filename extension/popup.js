@@ -3,7 +3,7 @@ const DEFAULTS = {
   enabled: true, boxW: 260, boxH: 200, custom: [], pos: null,
   disabled: builtin.filter((r) => r.id.startsWith('prov-')).map((r) => r.id),
 };
-const LOCAL_DEFAULTS = { areas: [], markers: {}, address: null };
+const LOCAL_DEFAULTS = { areas: [], markers: {}, address: null, places: [] };
 let settings = { ...DEFAULTS };
 let local = { ...LOCAL_DEFAULTS };
 
@@ -46,8 +46,13 @@ function refRow(r) {
     del.title = 'Verwijderen';
     del.addEventListener('click', (e) => {
       e.preventDefault();
-      settings.custom = (settings.custom || []).filter((c) => c.id !== r.id);
-      chrome.storage.sync.set({ custom: settings.custom });
+      if (r.place) {           // own world reference, kept in storage.local (too large for sync)
+        local.places = (local.places || []).filter((c) => c.id !== r.id);
+        chrome.storage.local.set({ places: local.places });
+      } else {
+        settings.custom = (settings.custom || []).filter((c) => c.id !== r.id);
+        chrome.storage.sync.set({ custom: settings.custom });
+      }
       renderRefs();
     });
     row.appendChild(del);
@@ -60,7 +65,7 @@ function renderRefs() {
   box.innerHTML = '';
   const byArea = (a, b) => b.width_m * b.height_m - a.width_m * a.height_m;
   const provinces = builtin.filter((r) => r.id.startsWith('prov-')).sort((a, b) => a.name.localeCompare(b.name));
-  const rest = builtin.filter((r) => !r.id.startsWith('prov-')).concat(local.areas || [], settings.custom || []).sort(byArea);
+  const rest = builtin.filter((r) => !r.id.startsWith('prov-')).concat(local.areas || [], local.places || [], settings.custom || []).sort(byArea);
   for (const r of rest) box.appendChild(refRow(r));
   const det = document.createElement('details');
   const on = provinces.filter((p) => !(settings.disabled || []).includes(p.id)).length;
@@ -147,12 +152,46 @@ async function setAddress() {
 }
 
 function clearAddress() {
-  local = { ...LOCAL_DEFAULTS };
+  local = { ...LOCAL_DEFAULTS, places: local.places || [] };
   chrome.storage.local.remove(['areas', 'markers', 'address']);
   setDisabled('amsterdam-centrum', false);
   $('addrMsg').textContent = '';
   renderAddress();
   renderRefs();
+}
+
+// Own reference from anywhere in the world: a country or continent from world.json (Natural Earth),
+// anything else from OpenStreetMap through Nominatim. See places.js.
+async function addPlace() {
+  const q = $('placeInput').value.trim();
+  const msg = $('placeMsg');
+  if (!q) return;
+  msg.className = 'msg';
+  msg.textContent = 'Omtrek opzoeken...';
+  $('placeBtn').disabled = true;
+  try {
+    const found = await MSR_PLACES.find(q, 'nl', chrome.runtime.getURL('world.json'));
+    const shape = found && MSR_PLACES.project(found.geoms, MSR_GEO);
+    if (!shape) {
+      msg.className = 'msg err';
+      msg.textContent = 'Geen omtrek gevonden. Probeer een andere naam.';
+    } else {
+      const ref = { id: 'place-' + found.key, name: found.name, custom: true, place: true, source: found.source, ...shape };
+      local.places = (local.places || []).filter((p) => p.id !== ref.id).concat([ref]);
+      await new Promise((res) => chrome.storage.local.set({ places: local.places }, res));
+      if ((settings.disabled || []).includes(ref.id)) setDisabled(ref.id, false);
+      const pinned = await sendToTab(await activeTab(), { type: 'msr:pin', id: ref.id });
+      msg.textContent = 'Toegevoegd: ' + ref.name + ' (' + fmtLen(ref.width_m) + ' × ' + fmtLen(ref.height_m) + ').' +
+        (pinned ? ' Staat nu vast op de kaart; "auto" keert terug naar automatisch.' : '');
+      $('placeInput').value = '';
+      renderRefs();
+      refreshState();
+    }
+  } catch (e) {
+    msg.className = 'msg err';
+    msg.textContent = 'Opzoeken mislukt, probeer het later opnieuw.';
+  }
+  $('placeBtn').disabled = false;
 }
 
 function bindSliders() {
@@ -181,5 +220,7 @@ function bindSliders() {
   $('addrBtn').addEventListener('click', setAddress);
   $('addrInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') setAddress(); });
   $('addrClear').addEventListener('click', clearAddress);
+  $('placeBtn').addEventListener('click', addPlace);
+  $('placeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') addPlace(); });
   refreshState();
 })();
