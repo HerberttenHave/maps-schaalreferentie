@@ -13,6 +13,7 @@ const W = 1280, H = 800, PANEL = 640;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // name, centre lat/lng, zoom (7 makes the Netherlands about 340 px high at these latitudes)
+const ONLY = process.env.MSR_ONLY ? process.env.MSR_ONLY.split(',') : null;   // MSR_ONLY=name1,name2 renders a subset
 const SCENES = [
   { name: 'nederland-over-new-york', lat: 41.0, lng: -73.6, zoom: 7 },
   { name: 'nederland-over-de-alpen', lat: 46.6, lng: 8.4, zoom: 7 },
@@ -21,6 +22,9 @@ const SCENES = [
   { name: 'nederland-over-tokio', lat: 35.9, lng: 139.5, zoom: 7 },
   { name: 'amsterdam-centrum-over-manhattan', lat: 40.765, lng: -73.975, zoom: 13 },
   { name: 'amsterdam-centrum-over-parijs', lat: 48.858, lng: 2.345, zoom: 13 },
+  // own references through ?ref= (a country, continent, region, city or island)
+  { name: 'zuid-afrika-over-groenland', lat: 72.0, lng: -41.0, zoom: 3, ref: 'Zuid-Afrika' },
+  { name: 'groenland-over-zuid-afrika', lat: -29.0, lng: 24.7, zoom: 4, ref: 'Groenland' },
 ];
 
 function getJSON(port, p) {
@@ -58,9 +62,9 @@ async function main() {
   await evaluate(`localStorage.setItem('msr.seen', 'true'); localStorage.setItem('msr.lang', '"nl"'); localStorage.setItem('msr.map', '"osm"');
     localStorage.setItem('msr.pos', JSON.stringify({ right: ${Math.round((W - PANEL) / 2)}, bottom: ${Math.round((H - frameH) / 2)} })); 'ok'`);
 
-  for (const s of SCENES) {
-    await send('Page.navigate', { url: `${BASE}?panel=${PANEL}&ui=0&s=${Date.now()}#${s.lat},${s.lng},${s.zoom}z` });
-    await sleep(6000);   // tiles
+  for (const s of SCENES.filter((x) => !ONLY || ONLY.includes(x.name))) {
+    await send('Page.navigate', { url: `${BASE}?panel=${PANEL}&ui=0&s=${Date.now()}${s.ref ? '&ref=' + encodeURIComponent(s.ref) : ''}#${s.lat},${s.lng},${s.zoom}z` });
+    await sleep(s.ref ? 9000 : 6000);   // tiles, and the outline lookup for ?ref=
     const name = await evaluate(`document.querySelector('.msr-name') && document.querySelector('.msr-name').textContent`);
     const r = await send('Page.captureScreenshot', { format: 'png' });
     const file = path.join(out, s.name + '.png');

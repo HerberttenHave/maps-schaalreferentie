@@ -80,6 +80,12 @@
   let address = load(KEYS.address, null);
   let places = load(KEYS.places, []);      // own references from anywhere in the world, see web/places.js
 
+  // Share links: ?ref=Zuid-Afrika#72,-41,3z pins that reference and lays it in the middle of the screen,
+  // over whatever the view in the hash shows. The reference is looked up like an own reference.
+  const REF_QUERY = (new URLSearchParams(location.search).get('ref') || '').trim();
+  let refLoading = !!REF_QUERY;
+  if (REF_QUERY) document.body.classList.add('ref-mid');
+
   let pinnedId = null, currentId = null, flashTimer = 0, raf = 0;
   let boxW = 260, boxH = 200;
   let view = null; // {lat, lng, mpp, zoom}
@@ -316,9 +322,16 @@
   function sizePanel() {
     // ?panel=600 forces a larger frame (big screens, screenshots); otherwise it follows the screen width
     const forced = +(new URLSearchParams(location.search).get('panel') || 0);
-    boxW = forced >= 120 ? Math.min(forced, window.innerWidth - 20) : Math.min(260, Math.max(180, Math.floor(window.innerWidth * 0.6)));
+    boxW = forced >= 120 ? Math.min(forced, window.innerWidth - 20)
+      : REF_QUERY ? Math.min(420, window.innerWidth - 20)            // a share link gets a larger frame
+      : Math.min(260, Math.max(180, Math.floor(window.innerWidth * 0.6)));
     boxH = Math.round(boxW * 200 / 260);
     document.documentElement.style.setProperty('--panel-w', boxW + 'px');
+    document.documentElement.style.setProperty('--frame-h', boxH + 'px');
+    // Size the canvas here, not in draw(): the scale is taken at the latitude under the frame, so the
+    // frame must have its real size and place before the first drawing.
+    canvas.style.width = boxW + 'px';
+    canvas.style.height = boxH + 'px';
     document.documentElement.style.setProperty('--panel-h', (boxH + 54) + 'px');
   }
   window.addEventListener('resize', () => { sizePanel(); schedule(); });
@@ -354,6 +367,7 @@
       const dx = e.clientX - start.x, dy = e.clientY - start.y;
       if (!start.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
       start.moved = true;
+      document.body.classList.remove('ref-mid');   // a dragged frame leaves the centred share-link position
       widget.classList.add('msr-dragging');
       widget.style.right = Math.max(0, start.right - dx) + 'px';
       widget.style.bottom = Math.max(0, start.bottom - dy) + 'px';
@@ -376,7 +390,7 @@
     save(KEYS.pos, { right: parseFloat(widget.style.right), bottom: parseFloat(widget.style.bottom) });
   }
   (function restorePosition() {
-    const pos = load(KEYS.pos, null);
+    const pos = REF_QUERY ? null : load(KEYS.pos, null);
     if (pos && typeof pos.right === 'number' && typeof pos.bottom === 'number') {
       widget.style.right = Math.max(0, Math.min(pos.right, window.innerWidth - 60)) + 'px';
       widget.style.bottom = Math.max(0, Math.min(pos.bottom, window.innerHeight - 60)) + 'px';
@@ -403,6 +417,7 @@
   function draw() {
     raf = 0;
     if (!view) return;
+    if (refLoading) { widget.style.visibility = 'hidden'; return; }   // share link: wait for its reference
     const mpp = frameMpp();
     const ref = chooseReference(mpp);
     if (!ref) { widget.style.visibility = 'hidden'; return; }
@@ -433,7 +448,8 @@
     const cx = W / 2 - ((b[0] + b[2]) / 2) * s;
     // The shape sits on the bottom edge of the frame, so the label row reads directly under it;
     // only a clipped (too big) shape is centred.
-    const cy = tooBig ? H / 2 + ((b[1] + b[3]) / 2) * s : (H - 4) + b[1] * s;
+    const mid = tooBig || document.body.classList.contains('ref-mid');   // share link: shape centred on the view centre
+    const cy = mid ? H / 2 + ((b[1] + b[3]) / 2) * s : (H - 4) + b[1] * s;
     const X = (x) => cx + x * s;
     const Y = (y) => cy - y * s;
 
@@ -688,6 +704,29 @@
     renderRefs();
     schedule();
   }
+  // Share link (?ref=...): look the reference up, pin it for this visit and show it centred.
+  async function pinFromQuery() {
+    try {
+      const found = await window.MSR_PLACES.find(REF_QUERY, lang, 'world.json?v=1');
+      const shape = found && window.MSR_PLACES.project(found.geoms, GEO);
+      if (shape) {
+        const ref = { id: 'place-' + found.key, name: found.name, custom: true, source: found.source, ...shape };
+        places = places.filter((p) => p.id !== ref.id).concat([ref]);   // not saved: a link should not fill someone's list
+        disabled.delete(ref.id);
+        pinnedId = ref.id;
+        renderRefs();
+        if (!viewFromHash()) fitReference(ref);
+      } else {
+        document.body.classList.remove('ref-mid');
+        toast(t('placeNotFound'), 3000);
+      }
+    } catch (e) {
+      document.body.classList.remove('ref-mid');
+      toast(t('placeFail'), 3000);
+    }
+    refLoading = false;
+    schedule();
+  }
   $('placeBtn').addEventListener('click', addPlace);
   $('placeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addPlace(); } });
 
@@ -715,6 +754,7 @@
   // ---------- start ----------
   renderAddress();
   applyLang();
-  if (!load(KEYS.seen, false)) openSheet();
+  if (!load(KEYS.seen, false) && !REF_QUERY) openSheet();   // a share link shows its example first
   setMapChoice(mapChoice);
+  if (REF_QUERY) pinFromQuery();
 })();

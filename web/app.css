@@ -18,6 +18,8 @@ body {
 /* on Google Maps the shape and the locate button sit above Google's own bottom-right links */
 body.map-google #msr-widget { bottom: calc(var(--safe-b) + var(--gap) + 24px); }
 body.map-google #locateBtn { bottom: calc(var(--safe-b) + var(--panel-h) + 2 * var(--gap) + 24px); }
+/* share link (?ref=...): the frame sits in the middle of the screen, its canvas centred on the view centre */
+body.ref-mid #msr-widget { right: calc(50% - var(--panel-w) / 2); bottom: auto; top: calc(50% - var(--frame-h, 200px) / 2); }
 .leaflet-top { top: calc(var(--safe-t) + 58px); }
 @media (pointer: coarse) { .leaflet-control-zoom { display: none; } }
 .leaflet-bottom.leaflet-left { max-width: calc(100vw - var(--panel-w) - 3 * var(--gap)); }
