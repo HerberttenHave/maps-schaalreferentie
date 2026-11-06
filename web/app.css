@@ -125,6 +125,8 @@ button.link { border: 0; background: transparent; color: #1a73e8; font: inherit;
 #refs label.row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f1f3f4; }
 #refs label.row span:first-of-type { flex: 1; }
 #refs .size { color: #5f6368; font-size: 12px; white-space: nowrap; }
+#refs .del { border: 0; background: transparent; color: #5f6368; font-size: 14px; width: 32px; height: 32px; margin: -6px -6px -6px 0; cursor: pointer; border-radius: 16px; }
+#refs .del:active { background: #f1f3f4; }
 #refs input[type=checkbox] { width: 18px; height: 18px; accent-color: #c2410c; }
 #refs details { padding: 6px 0; }
 #refs summary { cursor: pointer; color: #5f6368; }

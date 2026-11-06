@@ -22,13 +22,18 @@
       lookingUp: 'Opzoeken bij PDOK...', searching: 'Zoeken...', notFound: 'Adres niet gevonden. Probeer "straat huisnummer, plaats".',
       noAreas: 'Geen gebiedsomtrekken gevonden voor dit adres.', setTo: 'Ingesteld: ',
       references: 'Referenties', provinces: 'Provincies', on: 'aan', of: 'van', language: 'Taal',
-      sources: 'Kaart: OpenStreetMap. Vormen: CBS Gebiedsindelingen en Wijk- en buurtkaart 2024 via PDOK; voetbalveld 105 × 68 m (FIFA). De kaart is in Web Mercator, dus de vorm is zo groot als het gebied zou zijn als het lag waar je nu kijkt.',
+      sources: 'Kaart: OpenStreetMap. Vormen: CBS Gebiedsindelingen en Wijk- en buurtkaart 2024 via PDOK; voetbalveld 105 × 68 m (FIFA); landen en werelddelen van Natural Earth, overige eigen referenties van OpenStreetMap. De kaart is in Web Mercator, dus de vorm is zo groot als het gebied zou zijn als het lag waar je nu kijkt.',
       tooBig: 'groter dan dit venster', nothingFound: 'Niets gevonden', searchFail: 'Zoeken mislukt, probeer het later opnieuw',
       geoFail: 'Locatie niet beschikbaar', geoDenied: 'Geef de browser toegang tot je locatie',
       kind: { gemeente: 'gemeente', wijk: 'wijk', buurt: 'buurt' },
       names: {},
       mapChoice: 'Kaart', mapChoiceHelp: 'Google Maps wordt alleen geladen als je het kiest; dan gelden de voorwaarden van Google. Je keuze wordt onthouden.',
       googleLoading: 'Google Maps laden...', googleFail: 'Google Maps kon niet laden, terug naar OpenStreetMap.',
+      ownRef: 'Eigen referentie (hele wereld)',
+      ownRefHelp: 'Typ een land, werelddeel, regio, stad of eiland, bijvoorbeeld Groenland, Zuid-Afrika, Europa, Texel of Bali. De omtrek komt als referentie op de kaart te staan.',
+      ownRefPlaceholder: 'Land, regio, stad of eiland', add: 'Toevoegen', remove: 'Verwijderen',
+      placeSearching: 'Omtrek opzoeken...', placeNotFound: 'Geen omtrek gevonden. Probeer een andere naam.',
+      placeFail: 'Opzoeken mislukt, probeer het later opnieuw.', placeAdded: ' staat nu vast als referentie.',
     },
     en: {
       searchPlaceholder: 'Search a place or address', search: 'Search', whatIs: 'What is this?', close: 'Close',
@@ -43,18 +48,23 @@
       lookingUp: 'Looking up at PDOK...', searching: 'Searching...', notFound: 'Address not found. Try "street number, town".',
       noAreas: 'No area outlines found for this address.', setTo: 'Set: ',
       references: 'References', provinces: 'Provinces', on: 'on', of: 'of', language: 'Language',
-      sources: 'Map: OpenStreetMap. Shapes: CBS area outlines 2024 via PDOK; football pitch 105 × 68 m (FIFA). The map is Web Mercator, so the shape is as big as the area would be if it lay where you are looking.',
+      sources: 'Map: OpenStreetMap. Shapes: CBS area outlines 2024 via PDOK; football pitch 105 × 68 m (FIFA); countries and continents from Natural Earth, other own references from OpenStreetMap. The map is Web Mercator, so the shape is as big as the area would be if it lay where you are looking.',
       tooBig: 'larger than this panel', nothingFound: 'Nothing found', searchFail: 'Search failed, please try again later',
       geoFail: 'Location not available', geoDenied: 'Allow the browser to use your location',
       kind: { gemeente: 'municipality', wijk: 'district', buurt: 'neighbourhood' },
       names: { nl: 'The Netherlands', km2: '1 square kilometre', voetbalveld: 'Football pitch' },
       mapChoice: 'Map', mapChoiceHelp: 'Google Maps is only loaded when you choose it; Google\'s terms then apply. Your choice is remembered.',
       googleLoading: 'Loading Google Maps...', googleFail: 'Google Maps could not load, back to OpenStreetMap.',
+      ownRef: 'Your own reference (worldwide)',
+      ownRefHelp: 'Type a country, continent, region, city or island, for example Greenland, South Africa, Europe, Texel or Bali. Its outline is placed on the map as the reference.',
+      ownRefPlaceholder: 'Country, region, city or island', add: 'Add', remove: 'Remove',
+      placeSearching: 'Looking up the outline...', placeNotFound: 'No outline found. Try another name.',
+      placeFail: 'Lookup failed, please try again later.', placeAdded: ' is now pinned as the reference.',
     },
   };
 
   // ---------- storage (localStorage only) ----------
-  const KEYS = { lang: 'msr.lang', disabled: 'msr.disabled', areas: 'msr.areas', markers: 'msr.markers', address: 'msr.address', view: 'msr.view', seen: 'msr.seen', pos: 'msr.pos', map: 'msr.map' };
+  const KEYS = { lang: 'msr.lang', disabled: 'msr.disabled', areas: 'msr.areas', markers: 'msr.markers', address: 'msr.address', view: 'msr.view', seen: 'msr.seen', pos: 'msr.pos', map: 'msr.map', places: 'msr.places' };
   function load(key, fallback) {
     try { const v = localStorage.getItem(key); return v == null ? fallback : JSON.parse(v); } catch (e) { return fallback; }
   }
@@ -68,6 +78,7 @@
   let areas = load(KEYS.areas, []);
   let markers = load(KEYS.markers, {});
   let address = load(KEYS.address, null);
+  let places = load(KEYS.places, []);      // own references from anywhere in the world, see web/places.js
 
   let pinnedId = null, currentId = null, flashTimer = 0, raf = 0;
   let boxW = 260, boxH = 200;
@@ -77,7 +88,7 @@
   function refName(r) { return T[lang].names[r.id] || r.name; }
 
   // ---------- references ----------
-  function allReferences() { return BUILTIN.concat(areas || []); }
+  function allReferences() { return BUILTIN.concat(areas || [], places || []); }
   function enabledReferences() {
     return allReferences().filter((r) => !disabled.has(r.id)).sort((a, b) => b.width_m * b.height_m - a.width_m * a.height_m);
   }
@@ -543,6 +554,16 @@
     size.className = 'size';
     size.textContent = fmtLen(r.width_m) + ' × ' + fmtLen(r.height_m);
     row.appendChild(size);
+    if (r.custom) {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'del';
+      del.textContent = '✕';
+      del.title = t('remove');
+      del.setAttribute('aria-label', t('remove') + ' ' + r.name);
+      del.addEventListener('click', (e) => { e.preventDefault(); removePlace(r.id); });
+      row.appendChild(del);
+    }
     return row;
   }
   function renderRefs() {
@@ -550,7 +571,7 @@
     box.innerHTML = '';
     const byArea = (a, b) => b.width_m * b.height_m - a.width_m * a.height_m;
     const provinces = BUILTIN.filter((r) => r.id.startsWith('prov-')).sort((a, b) => a.name.localeCompare(b.name));
-    const rest = BUILTIN.filter((r) => !r.id.startsWith('prov-')).concat(areas || []).sort(byArea);
+    const rest = BUILTIN.filter((r) => !r.id.startsWith('prov-')).concat(areas || [], places || []).sort(byArea);
     for (const r of rest) box.appendChild(refRow(r));
     const det = document.createElement('details');
     const on = provinces.filter((p) => !disabled.has(p.id)).length;
@@ -615,6 +636,60 @@
   $('addrBtn').addEventListener('click', setAddress);
   $('addrInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); setAddress(); } });
   $('addrClear').addEventListener('click', clearAddress);
+
+  // ---------- own references: any country, continent, region, city or island ----------
+  async function addPlace() {
+    const q = $('placeInput').value.trim();
+    const msg = $('placeMsg');
+    if (!q) return;
+    msg.className = 'msg';
+    msg.textContent = t('placeSearching');
+    $('placeBtn').disabled = true;
+    try {
+      const found = await window.MSR_PLACES.find(q, lang, 'world.json?v=1');
+      const shape = found && window.MSR_PLACES.project(found.geoms, GEO);
+      if (!shape) {
+        msg.className = 'msg err';
+        msg.textContent = t('placeNotFound');
+      } else {
+        const ref = { id: 'place-' + found.key, name: found.name, custom: true, source: found.source, ...shape };
+        places = places.filter((p) => p.id !== ref.id).concat([ref]);
+        save(KEYS.places, places);
+        disabled.delete(ref.id);
+        save(KEYS.disabled, [...disabled]);
+        pinnedId = ref.id;                 // show it at once; "auto" returns to the automatic choice
+        $('placeInput').value = '';
+        msg.textContent = '';
+        renderRefs();
+        fitReference(ref);
+        closeSheet();
+        toast(ref.name + t('placeAdded'), 4000);
+        schedule();
+      }
+    } catch (e) {
+      msg.className = 'msg err';
+      msg.textContent = t('placeFail');
+    }
+    $('placeBtn').disabled = false;
+  }
+  // Zooms the map out just far enough for a new reference to fit its frame (never in).
+  function fitReference(ref) {
+    if (!view || !mapApi) return;
+    const need = Math.max(ref.width_m / (boxW - 2 * PAD), ref.height_m / (boxH - 2 * PAD));
+    const mpp = frameMpp();
+    if (need <= mpp) return;
+    const zoom = Math.max(2, Math.floor((view.zoom - Math.log2(need / mpp)) * 4) / 4);
+    if (zoom < view.zoom) mapApi.setView(view.lat, view.lng, mapApi.kind === 'google' ? Math.floor(zoom) : zoom);
+  }
+  function removePlace(id) {
+    places = places.filter((p) => p.id !== id);
+    save(KEYS.places, places.length ? places : null);
+    if (pinnedId === id) pinnedId = null;
+    renderRefs();
+    schedule();
+  }
+  $('placeBtn').addEventListener('click', addPlace);
+  $('placeInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addPlace(); } });
 
   // ---------- language ----------
   function applyLang() {
