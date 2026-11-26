@@ -3,25 +3,22 @@
 (() => {
   const BUILTIN = window.MSR_BUILTIN_REFERENCES || [];
   const GEO = window.MSR_GEO;
-  const PDOK = window.MSR_PDOK;
   const PAD = 6;
   const $ = (id) => document.getElementById(id);
 
   // ---------- texts ----------
   const T = {
     en: {
-      title: 'How big is it?', cta: 'Add my home', ctaDone: 'My places',
+      title: 'How big is it?', cta: 'Add my place', ctaDone: 'My places',
       searchPlaceholder: 'Search', search: 'Search', close: 'Close',
       locate: 'My location', panelHint: 'Tap to select, drag to move',
       larger: 'Larger', smaller: 'Smaller', backToAuto: 'Back to automatic',
       aboutText: 'The red outline is a place you know, drawn at the scale of the map. Add your own:',
-      myAddress: 'Your home', addressPlaceholder: 'Street 12, Town', set: 'Add', clear: 'Remove',
-      addressHelp: 'Dutch addresses only. Somewhere else? Add your town below.',
+      myAddress: 'Your home', clear: 'Remove',
       ownRef: 'Any place in the world', ownRefPlaceholder: 'Town, country or island', add: 'Add', remove: 'Remove',
-      lookingUp: 'Looking up...', searching: 'Searching...', notFound: 'Not found. Try "Street 12, Town".',
-      noAreas: 'No outlines found for this address.', setTo: 'Added: ',
+      searching: 'Searching...',
       more: 'More options', references: 'Outlines', provinces: 'Dutch provinces', on: 'on', of: 'of',
-      aboutPrivacy: 'No cookies, no tracking. Lookups go to PDOK and OpenStreetMap.',
+      aboutPrivacy: 'No cookies, no tracking. Lookups go to OpenStreetMap.',
       extensionLink: 'Chrome extension for Google Maps',
       sources: 'Data: OpenStreetMap, CBS via PDOK, Natural Earth.',
       nothingFound: 'Nothing found', searchFail: 'Search failed, try again later',
@@ -34,18 +31,16 @@
       placeFail: 'Lookup failed, try again later.', placeAdded: ' is now your reference.',
     },
     nl: {   // only through ?lang=nl (demo video, share images); the visible app is English
-      title: 'Hoe groot is het?', cta: 'Mijn huis toevoegen', ctaDone: 'Mijn plekken',
+      title: 'Hoe groot is het?', cta: 'Mijn plek toevoegen', ctaDone: 'Mijn plekken',
       searchPlaceholder: 'Zoeken', search: 'Zoeken', close: 'Sluiten',
       locate: 'Mijn locatie', panelHint: 'Tik om te selecteren, sleep om te verplaatsen',
       larger: 'Groter', smaller: 'Kleiner', backToAuto: 'Terug naar automatisch',
       aboutText: 'De rode omtrek is een plek die je kent, op de schaal van de kaart. Voeg je eigen plek toe:',
-      myAddress: 'Je huis', addressPlaceholder: 'Straat 12, plaats', set: 'Toevoegen', clear: 'Verwijderen',
-      addressHelp: 'Alleen Nederlandse adressen. Ergens anders? Voeg hieronder je plaats toe.',
+      myAddress: 'Je huis', clear: 'Verwijderen',
       ownRef: 'Elke plek ter wereld', ownRefPlaceholder: 'Plaats, land of eiland', add: 'Toevoegen', remove: 'Verwijderen',
-      lookingUp: 'Opzoeken...', searching: 'Zoeken...', notFound: 'Niet gevonden. Probeer "Straat 12, plaats".',
-      noAreas: 'Geen omtrekken gevonden voor dit adres.', setTo: 'Toegevoegd: ',
+      searching: 'Zoeken...',
       more: 'Meer opties', references: 'Omtrekken', provinces: 'Provincies', on: 'aan', of: 'van',
-      aboutPrivacy: 'Geen cookies, geen tracking. Opzoeken gaat via PDOK en OpenStreetMap.',
+      aboutPrivacy: 'Geen cookies, geen tracking. Opzoeken gaat via OpenStreetMap.',
       extensionLink: 'Chrome-extensie voor Google Maps',
       sources: 'Data: OpenStreetMap, CBS via PDOK, Natural Earth.',
       nothingFound: 'Niets gevonden', searchFail: 'Zoeken mislukt, probeer het later opnieuw',
@@ -648,7 +643,7 @@
   function closeSheet() { $('sheet').hidden = true; $('sheetBackdrop').hidden = true; save(KEYS.seen, true); }
   $('helpBtn').addEventListener('click', () => {
     openSheet();
-    if (!address) $('addrInput').focus();      // the button promises "add my home": the cursor is already there
+    if (!hasOwn()) $('placeInput').focus();    // the button promises "add my place": the cursor is already there
   });
   $('closeBtn').addEventListener('click', closeSheet);
   $('sheetBackdrop').addEventListener('click', closeSheet);
@@ -701,65 +696,28 @@
     det.appendChild(sum);
     for (const r of provinces) det.appendChild(refRow(r));
     box.appendChild(det);
+    renderCta();
   }
   function renderAddress() {
-    $('addrSet').hidden = !address;
-    $('addrForm').hidden = !!address;
+    $('homeBox').hidden = !address;          // only for visitors who set an address in an earlier version
     if (address) $('addrLabel').textContent = address.label;
-    $('helpLabel').textContent = t(address ? 'ctaDone' : 'cta');
-    $('helpBtn').classList.toggle('done', !!address);
+  }
+  // The button invites until the visitor has a place of their own, then it becomes a quiet "My places".
+  let queryRefId = null;                      // the reference of a share link is not the visitor's own
+  function hasOwn() { return !!address || (places || []).some((p) => p.id !== queryRefId); }
+  function renderCta() {
+    $('helpLabel').textContent = t(hasOwn() ? 'ctaDone' : 'cta');
+    $('helpBtn').classList.toggle('done', hasOwn());
   }
 
-  async function setAddress() {
-    const q = $('addrInput').value.trim();
-    const msg = $('addrMsg');
-    if (!q) return;
-    msg.className = 'msg';
-    msg.textContent = t('lookingUp');
-    $('addrBtn').disabled = true;
-    try {
-      const geo = await PDOK.geocode(q);
-      if (!geo) throw new Error(t('notFound'));
-      const found = await PDOK.fetchAreas(geo, GEO);
-      if (!found.length) throw new Error(t('noAreas'));
-      const mk = {};
-      if (geo.lon != null) {
-        for (const a of found) { const m = GEO.markerFor(a, geo.lon, geo.lat); if (m) a.marker = m; }
-        for (const r of BUILTIN) { const m = GEO.markerFor(r, geo.lon, geo.lat); if (m) mk[r.id] = m; }
-      }
-      const provId = geo.provinciecode ? 'prov-' + geo.provinciecode : null;
-      const prov = BUILTIN.find((r) => r.id === provId) || BUILTIN.find((r) => r.id.startsWith('prov-') && r.name === geo.provincienaam);
-      areas = found; markers = mk;
-      address = { label: geo.label, provId: prov ? prov.id : null, lat: geo.lat, lon: geo.lon };
-      save(KEYS.areas, areas); save(KEYS.markers, markers); save(KEYS.address, address);
-      for (const a of areas) disabled.delete(a.id);
-      disabled.add('amsterdam-centrum');       // your own city replaces the Amsterdam example
-      if (prov) setDisabled(prov.id, false); else save(KEYS.disabled, [...disabled]);
-      pinnedId = null;
-      msg.textContent = '';
-      $('addrInput').value = '';
-      renderAddress();
-      renderRefs();
-      closeSheet();
-      toast(t('setTo') + areas.map((a) => a.name).join(', ') + (prov ? ', ' + prov.name : '') + '.', 5000);
-      schedule();
-    } catch (e) {
-      msg.className = 'msg err';
-      msg.textContent = e.message || String(e);
-    }
-    $('addrBtn').disabled = false;
-  }
   function clearAddress() {
     areas = []; markers = {}; address = null;
     save(KEYS.areas, null); save(KEYS.markers, null); save(KEYS.address, null);
     setDisabled('amsterdam-centrum', false);
-    $('addrMsg').textContent = '';
     renderAddress();
     renderRefs();
     schedule();
   }
-  $('addrBtn').addEventListener('click', setAddress);
-  $('addrInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); setAddress(); } });
   $('addrClear').addEventListener('click', clearAddress);
 
   // ---------- own references: any country, continent, region, city or island ----------
@@ -820,6 +778,7 @@
       const shape = found && window.MSR_PLACES.project(found.geoms, GEO);
       if (shape) {
         const ref = { id: 'place-' + found.key, name: found.name, custom: true, source: found.source, ...shape };
+        queryRefId = ref.id;
         places = places.filter((p) => p.id !== ref.id).concat([ref]);   // not saved: a link should not fill someone's list
         disabled.delete(ref.id);
         pinnedId = ref.id;
