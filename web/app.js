@@ -393,10 +393,20 @@
   (function restorePosition() {
     const pos = REF_QUERY ? null : load(KEYS.pos, null);
     if (pos && typeof pos.right === 'number' && typeof pos.bottom === 'number') {
-      widget.style.right = Math.max(0, Math.min(pos.right, window.innerWidth - 60)) + 'px';
-      widget.style.bottom = Math.max(0, Math.min(pos.bottom, window.innerHeight - 60)) + 'px';
+      widget.style.right = pos.right + 'px';
+      widget.style.bottom = pos.bottom + 'px';
+      keepInView();
     }
   })();
+  // A position saved on a wider screen must not leave the frame outside a narrower one: keep all of it in view.
+  function keepInView() {
+    if (!widget.style.right || REF_QUERY) return;          // default corner, or a share link that places it itself
+    const maxR = Math.max(0, window.innerWidth - (widget.offsetWidth || 260));
+    const maxB = Math.max(0, window.innerHeight - Math.max(widget.offsetHeight, 250));
+    widget.style.right = Math.max(0, Math.min(parseFloat(widget.style.right) || 0, maxR)) + 'px';
+    widget.style.bottom = Math.max(0, Math.min(parseFloat(widget.style.bottom) || 0, maxB)) + 'px';
+  }
+  window.addEventListener('resize', () => { keepInView(); schedule(); });
   setupDrag();
 
 
