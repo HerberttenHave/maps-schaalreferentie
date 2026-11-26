@@ -32,7 +32,7 @@ const TEXT = {
   en: {
     ref: 'Greenland',
     c1: 'Greenland looks as big as Africa.',
-    c2: 'But the map stretches everything near the poles\u2026',
+    c2: 'But the map stretches the far north\u2026',
     c3: 'In reality, Africa is 14 times bigger.',
     foot: 'See for yourself how big things really are',
   },
