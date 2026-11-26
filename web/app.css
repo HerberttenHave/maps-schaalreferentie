@@ -135,3 +135,6 @@ button.link { border: 0; background: transparent; color: #1a73e8; font: inherit;
 
 /* ?ui=0: map and reference only, for screenshots */
 body.no-ui #searchForm, body.no-ui #langBtn, body.no-ui #helpBtn, body.no-ui #locateBtn, body.no-ui .leaflet-control-zoom, body.no-ui #searchMsg { display: none !important; }
+
+/* the outline itself: a full-screen canvas over the map, under the controls; never catches input */
+#msr-overlay { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 999; pointer-events: none; }

@@ -84,7 +84,9 @@
   // over whatever the view in the hash shows. The reference is looked up like an own reference.
   const REF_QUERY = (new URLSearchParams(location.search).get('ref') || '').trim();
   let refLoading = !!REF_QUERY;
-  if (REF_QUERY) document.body.classList.add('ref-mid');
+  // ...&home=1 lays the outline on the reference's own place on the map, glued there until it is dragged away.
+  let homeLock = !!REF_QUERY && new URLSearchParams(location.search).get('home') === '1';
+  if (REF_QUERY && !homeLock) document.body.classList.add('ref-mid');
 
   let pinnedId = null, currentId = null, flashTimer = 0, raf = 0;
   let boxW = 260, boxH = 200;
@@ -368,15 +370,18 @@
       if (!start.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
       start.moved = true;
       document.body.classList.remove('ref-mid');   // a dragged frame leaves the centred share-link position
+      homeLock = false;
       widget.classList.add('msr-dragging');
       widget.style.right = Math.max(0, start.right - dx) + 'px';
       widget.style.bottom = Math.max(0, start.bottom - dy) + 'px';
+      schedule();                                  // the outline changes size and shape while it moves
     });
     const end = (e) => {
       if (!start || e.pointerId !== start.id) return;
       if (start.moved) {
         widget.classList.remove('msr-dragging');
         savePosition();
+        schedule();
       } else if (start.onLabel) {
         widget.classList.toggle('msr-selected');
       }
@@ -414,13 +419,83 @@
     const dy = (r.top + r.height / 2) - window.innerHeight / 2;
     return 156543.03392 * Math.cos(latAtOffset(view.lat, zoom, dy) * Math.PI / 180) / Math.pow(2, zoom);
   }
+
+  // ---------- true-size drawing ----------
+  // The outline is drawn on a full-screen canvas, vertex by vertex through the map's own projection
+  // (Web Mercator): the shape is laid on the globe at the place under the frame and projected the way
+  // the map itself is. Small shapes look as before. A country or continent stretches towards the poles
+  // exactly like the map, so Greenland laid on Greenland covers it, and shrinks when dragged to the equator.
+  const overlay = document.createElement('canvas');
+  overlay.id = 'msr-overlay';
+  document.body.appendChild(overlay);
+  const octx = overlay.getContext('2d');
+  const R_EARTH = 6371008.8, RAD = Math.PI / 180, MAX_LAT = 85.0511 * RAD;
+  const mercY = (phi) => Math.log(Math.tan(Math.PI / 4 + phi / 2));
+  const polarCache = new WeakMap();
+  function polar(ref) {          // per vertex: sin and cos of the angular distance and of the bearing from the shape's origin
+    let c = polarCache.get(ref);
+    if (!c) {
+      const conv = (pts) => {
+        const a = new Float64Array(pts.length * 4);
+        pts.forEach((q, i) => {
+          const d = Math.hypot(q[0], q[1]) / R_EARTH, th = Math.atan2(q[0], q[1]);
+          a[i * 4] = Math.sin(d); a[i * 4 + 1] = Math.cos(d); a[i * 4 + 2] = Math.sin(th); a[i * 4 + 3] = Math.cos(th);
+        });
+        return { a, out: new Float64Array(pts.length * 2) };
+      };
+      c = { rings: [], lines: (ref.lines || []).map(conv) };
+      for (const poly of ref.polygons) for (const ring of poly) c.rings.push(conv(ring));
+      polarCache.set(ref, c);
+    }
+    return c;
+  }
+  // Screen position of one point given as (sin d, cos d, sin bearing, cos bearing) from an origin at latitude phi1
+  // whose own screen position is (ox, oy). K = map pixels per radian.
+  function projectPoint(sd, cd, st, ct, s1, c1, m1, ox, oy, K, out, j) {
+    let s2 = s1 * cd + c1 * sd * ct;
+    if (s2 > 1) s2 = 1; else if (s2 < -1) s2 = -1;
+    let phi2 = Math.asin(s2);
+    if (phi2 > MAX_LAT) phi2 = MAX_LAT; else if (phi2 < -MAX_LAT) phi2 = -MAX_LAT;
+    out[j] = ox + Math.atan2(st * sd * c1, cd - s1 * s2) * K;
+    out[j + 1] = oy - (mercY(phi2) - m1) * K;
+  }
+  function projectShape(pc, phi1, ox, oy, K) {   // fills the out buffers, returns the screen bbox of the rings
+    const s1 = Math.sin(phi1), c1 = Math.cos(phi1), m1 = mercY(phi1);
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const g of pc.rings) {
+      const a = g.a, out = g.out;
+      for (let i = 0, n = out.length / 2; i < n; i++) {
+        projectPoint(a[i * 4], a[i * 4 + 1], a[i * 4 + 2], a[i * 4 + 3], s1, c1, m1, ox, oy, K, out, i * 2);
+        const x = out[i * 2], y = out[i * 2 + 1];
+        if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+      }
+    }
+    for (const g of pc.lines) {
+      const a = g.a, out = g.out;
+      for (let i = 0, n = out.length / 2; i < n; i++) projectPoint(a[i * 4], a[i * 4 + 1], a[i * 4 + 2], a[i * 4 + 3], s1, c1, m1, ox, oy, K, out, i * 2);
+    }
+    return [x0, y0, x1, y1];
+  }
+  // Share link with home=1: move the frame so that the outline lies on the reference's own place.
+  function layAtHome(ref, zoom, K) {
+    if (!ref.origin) return;
+    const W0 = window.innerWidth, H0 = window.innerHeight;
+    let dl = (ref.origin[0] - view.lng) % 360; if (dl > 180) dl -= 360; else if (dl < -180) dl += 360;
+    const phi0 = ref.origin[1] * RAD;
+    const hx = W0 / 2 + dl * RAD * K, hy = H0 / 2 - (mercY(phi0) - mercY(view.lat * RAD)) * K;
+    const bb = projectShape(polar(ref), phi0, hx, hy, K);
+    const r = canvas.getBoundingClientRect(), wr = widget.getBoundingClientRect();
+    const dx = (bb[0] + bb[2]) / 2 - (r.left + r.width / 2), dy = bb[3] - (r.top + r.height - 4);
+    widget.style.right = (W0 - wr.right - dx) + 'px';
+    widget.style.bottom = (H0 - wr.bottom - dy) + 'px';
+  }
   function draw() {
     raf = 0;
     if (!view) return;
-    if (refLoading) { widget.style.visibility = 'hidden'; return; }   // share link: wait for its reference
+    if (refLoading) { widget.style.visibility = 'hidden'; octx.clearRect(0, 0, overlay.width, overlay.height); return; }   // share link: wait for its reference
     const mpp = frameMpp();
     const ref = chooseReference(mpp);
-    if (!ref) { widget.style.visibility = 'hidden'; return; }
+    if (!ref) { widget.style.visibility = 'hidden'; octx.clearRect(0, 0, overlay.width, overlay.height); return; }
     widget.style.visibility = '';
 
     if (ref.id !== currentId) {
@@ -440,56 +515,78 @@
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, W, H);                // the frame's own canvas is only the layout box; the outline is on the overlay
 
     const s = 1 / mpp;                        // px per metre at the frame's own latitude
     const b = ref.bbox;                       // [minx, miny, maxx, maxy] metres
     const tooBig = ref.width_m * s > W || ref.height_m * s > H;
-    const cx = W / 2 - ((b[0] + b[2]) / 2) * s;
     // The shape sits on the bottom edge of the frame, so the label row reads directly under it;
-    // only a clipped (too big) shape is centred.
-    const mid = tooBig || document.body.classList.contains('ref-mid');   // share link: shape centred on the view centre
-    const cy = mid ? H / 2 + ((b[1] + b[3]) / 2) * s : (H - 4) + b[1] * s;
-    const X = (x) => cx + x * s;
-    const Y = (y) => cy - y * s;
-
+    // a shape larger than the frame, or a share link, is centred on the frame instead.
+    const mid = tooBig || document.body.classList.contains('ref-mid');
     const tiny = Math.max(ref.width_m, ref.height_m) * s < 6;
+
+    const W0 = window.innerWidth, H0 = window.innerHeight;
+    if (overlay.width !== Math.round(W0 * dpr) || overlay.height !== Math.round(H0 * dpr)) {
+      overlay.width = Math.round(W0 * dpr); overlay.height = Math.round(H0 * dpr);
+    }
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    octx.clearRect(0, 0, W0, H0);
+
+    const zoom = view.zoom;
+    const K = 256 * Math.pow(2, zoom) / (2 * Math.PI);          // map pixels per radian
+    if (homeLock) layAtHome(ref, zoom, K);
+    const r = canvas.getBoundingClientRect();
+    const pc = polar(ref);
+    // Where the shape has to end up: its bottom centre on the frame's bottom centre (or centre on centre).
+    const tx = r.left + W / 2, ty = mid ? r.top + H / 2 : r.top + H - 4;
+    // First guess for the screen position of the shape's origin: the flat layout. Two corrections bring
+    // the projected shape onto the target, because its size depends on the latitude it lands on.
+    let ox = r.left + W / 2 - ((b[0] + b[2]) / 2) * s;
+    let oy = r.top + (mid ? H / 2 + ((b[1] + b[3]) / 2) * s : (H - 4) + b[1] * s);
+    let phi1 = 0;
+    for (let pass = 0; pass < 3; pass++) {
+      phi1 = latAtOffset(view.lat, zoom, oy - H0 / 2) * RAD;
+      const bb = projectShape(pc, phi1, ox, oy, K);
+      if (pass === 2) break;
+      ox += tx - (bb[0] + bb[2]) / 2;
+      oy += ty - (mid ? (bb[1] + bb[3]) / 2 : bb[3]);
+    }
 
     // Outline only, no fill, no panel background: the shape lies over the map like a stencil.
     // A white halo under the red line keeps it readable on any map colour.
-    ctx.lineJoin = 'round';
-    ctx.lineCap = 'round';
+    octx.lineJoin = 'round';
+    octx.lineCap = 'round';
     const trace = () => {
-      ctx.beginPath();
-      for (const poly of ref.polygons) for (const ring of poly) {
-        ring.forEach((p, i) => { if (i === 0) ctx.moveTo(X(p[0]), Y(p[1])); else ctx.lineTo(X(p[0]), Y(p[1])); });
-        ctx.closePath();
+      octx.beginPath();
+      for (const g of pc.rings) {
+        const o = g.out;
+        for (let i = 0, n = o.length / 2; i < n; i++) { if (i === 0) octx.moveTo(o[0], o[1]); else octx.lineTo(o[i * 2], o[i * 2 + 1]); }
+        octx.closePath();
       }
-      if (ref.lines) for (const line of ref.lines) line.forEach((p, i) => { if (i === 0) ctx.moveTo(X(p[0]), Y(p[1])); else ctx.lineTo(X(p[0]), Y(p[1])); });
+      for (const g of pc.lines) {
+        const o = g.out;
+        for (let i = 0, n = o.length / 2; i < n; i++) { if (i === 0) octx.moveTo(o[0], o[1]); else octx.lineTo(o[i * 2], o[i * 2 + 1]); }
+      }
     };
     // Line weight follows the drawn size, so a small Netherlands stays an outline instead of a red blob.
     const px = Math.max(ref.width_m, ref.height_m) * s;
     const lw = px < 40 ? 0.8 : px < 90 ? 1.2 : px < 160 ? 1.6 : 2;
-    trace(); ctx.lineWidth = lw + (px < 40 ? 1.2 : 2.5); ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke();
-    trace(); ctx.lineWidth = lw; ctx.strokeStyle = '#d32f2f'; ctx.stroke();
+    trace(); octx.lineWidth = lw + (px < 40 ? 1.2 : 2.5); octx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; octx.stroke();
+    trace(); octx.lineWidth = lw; octx.strokeStyle = '#d32f2f'; octx.stroke();
     const marker = ref.marker || markers[ref.id];
     if (marker && !tiny) {
-      ctx.beginPath();
-      ctx.arc(X(marker[0]), Y(marker[1]), 2.5, 0, Math.PI * 2);
-      ctx.fillStyle = '#1a73e8';
-      ctx.fill();
+      const d = Math.hypot(marker[0], marker[1]) / R_EARTH, th = Math.atan2(marker[0], marker[1]), mk = [0, 0];
+      projectPoint(Math.sin(d), Math.cos(d), Math.sin(th), Math.cos(th), Math.sin(phi1), Math.cos(phi1), mercY(phi1), ox, oy, K, mk, 0);
+      octx.beginPath();
+      octx.arc(mk[0], mk[1], 2.5, 0, Math.PI * 2);
+      octx.fillStyle = '#1a73e8';
+      octx.fill();
     }
     if (tiny) { // make a near-invisible speck findable
-      ctx.beginPath();
-      ctx.arc(W / 2, H / 2, 7, 0, Math.PI * 2);
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke();
-      ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(211, 47, 47, 0.7)'; ctx.stroke();
-    }
-    if (tooBig) {
-      ctx.font = '11px Roboto, Arial, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.strokeText(t('tooBig'), W / 2, H - 6);
-      ctx.fillStyle = '#202124'; ctx.fillText(t('tooBig'), W / 2, H - 6);
+      octx.beginPath();
+      octx.arc(tx, ty - (mid ? 0 : 3), 7, 0, Math.PI * 2);
+      octx.lineWidth = 3; octx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; octx.stroke();
+      octx.lineWidth = 1; octx.strokeStyle = 'rgba(211, 47, 47, 0.7)'; octx.stroke();
     }
   }
 
