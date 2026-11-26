@@ -25,3 +25,26 @@ Prefer it inside Google Maps on a computer? Chrome extension:
 https://github.com/HerberttenHave/maps-schaalreferentie
 
 Free, open source, no tracking. Let me know what you think.
+
+# WhatsApp-status bij het filmpje (Groenland en Afrika)
+
+Filmpje: `store/video/groenland-afrika-nl.mp4` (Nederlands) of `store/video/groenland-afrika-en.mp4` (Engels). De link opent de kaart met Groenland op zijn eigen plek, klaar om te slepen.
+
+## Nederlands
+
+Groenland lijkt op de kaart even groot als Afrika. In het echt is Afrika 14 keer groter 😉
+
+Zelf proberen? Tik op de naam en sleep. Daarna je eigen stad erop met Add my place:
+https://herberttenhave.github.io/maps-schaalreferentie/web/?ref=Greenland&home=1#35,-10,2z
+
+## English
+
+Greenland looks as big as Africa on the map. In reality Africa is 14 times bigger 😉
+
+Try it yourself! Tap the name and drag. Then put your own town on it with Add my place:
+https://herberttenhave.github.io/maps-schaalreferentie/web/?ref=Greenland&home=1#35,-10,2z
+
+## Extra kort (als de link te lang oogt)
+
+Groenland even groot als Afrika? Afrika is 14 keer groter 😉 Sleep het zelf:
+https://herberttenhave.github.io/maps-schaalreferentie/
