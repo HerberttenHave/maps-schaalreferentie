@@ -1,7 +1,7 @@
 {
-  "name": "Maps schaalreferentie",
-  "short_name": "Schaal",
-  "description": "Een vorm die je kent op dezelfde schaal als de kaart, waar ook ter wereld.",
+  "name": "How big is it? Maps scale reference",
+  "short_name": "How big?",
+  "description": "A place you know, drawn on the map at the same scale, anywhere in the world.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",

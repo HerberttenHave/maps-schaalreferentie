@@ -20,30 +20,48 @@ body.map-google #msr-widget { bottom: calc(var(--safe-b) + var(--gap) + 24px); }
 body.map-google #locateBtn { bottom: calc(var(--safe-b) + var(--panel-h) + 2 * var(--gap) + 24px); }
 /* share link (?ref=...): the frame sits in the middle of the screen, its canvas centred on the view centre */
 body.ref-mid #msr-widget { right: calc(50% - var(--panel-w) / 2); bottom: auto; top: calc(50% - var(--frame-h, 200px) / 2); }
-.leaflet-top { top: calc(var(--safe-t) + 58px); }
+.leaflet-top { top: calc(var(--safe-t) + 66px); }
 @media (pointer: coarse) { .leaflet-control-zoom { display: none; } }
 .leaflet-bottom.leaflet-left { max-width: calc(100vw - var(--panel-w) - 3 * var(--gap)); }
 .leaflet-control-attribution { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
-/* top bar: search, language, help */
+/* top bar: a small search field left, the big "add my home" button right */
 .topbar {
   position: fixed; z-index: 1000;
   top: calc(var(--safe-t) + var(--gap)); left: var(--gap); right: var(--gap);
-  display: flex; gap: 6px; align-items: center;
+  display: flex; gap: 8px; align-items: center; justify-content: space-between;
+  pointer-events: none;                       /* the gap between the two stays map */
 }
+.topbar > * { pointer-events: auto; }
 #searchForm {
-  flex: 1; display: flex; min-width: 0;
-  background: #fff; border-radius: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  flex: 0 1 170px; display: flex; min-width: 0;
+  background: #fff; border-radius: 18px; box-shadow: 0 1px 4px rgba(0,0,0,.3);
   overflow: hidden;
 }
 #searchInput {
-  flex: 1; min-width: 0; border: 0; outline: 0; padding: 0 14px; height: 40px;
-  font: 15px/1 inherit; font-family: inherit; background: transparent; color: inherit;
+  flex: 1; min-width: 0; width: 0; border: 0; outline: 0; padding: 0 0 0 12px; height: 36px;
+  font: 16px/1 inherit; font-family: inherit; background: transparent; color: inherit;   /* 16px: no zoom-in on iPhone */
 }
 #searchInput::-webkit-search-cancel-button { -webkit-appearance: none; }
 #searchBtn {
-  border: 0; background: transparent; width: 42px; height: 40px; font-size: 18px; cursor: pointer; color: #5f6368;
+  flex: none; border: 0; background: transparent; width: 36px; height: 36px; font-size: 15px; cursor: pointer; color: #5f6368;
 }
+.cta {
+  flex: none; display: flex; align-items: center; gap: 8px;
+  height: 50px; padding: 0 20px 0 15px; border: 0; border-radius: 25px;
+  background: #c2410c; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,.35);
+  font: 700 17px/1 inherit; font-family: inherit; cursor: pointer; white-space: nowrap;
+  animation: cta-pulse 1.8s ease-out 1.2s 3;
+}
+.cta:active { background: #9a3412; }
+.cta svg { flex: none; }
+.cta.done { background: #fff; color: #c2410c; animation: none; height: 44px; font-size: 15px; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.cta.done:active { background: #f1f3f4; }
+@keyframes cta-pulse {
+  0% { box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 0 0 0 rgba(194,65,12,.6); }
+  100% { box-shadow: 0 2px 8px rgba(0,0,0,.35), 0 0 0 16px rgba(194,65,12,0); }
+}
+@media (prefers-reduced-motion: reduce) { .cta { animation: none; } }
 .pill {
   flex: none; height: 40px; min-width: 40px; padding: 0 10px; border: 0; border-radius: 20px;
   background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); color: #202124;
@@ -51,7 +69,7 @@ body.ref-mid #msr-widget { right: calc(50% - var(--panel-w) / 2); bottom: auto; 
 }
 .pill:active { background: #f1f3f4; }
 .toast {
-  position: fixed; z-index: 1000; top: calc(var(--safe-t) + 58px); left: 50%; transform: translateX(-50%);
+  position: fixed; z-index: 1000; top: calc(var(--safe-t) + 70px); left: 50%; transform: translateX(-50%);
   background: rgba(32,33,36,.92); color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 13px; max-width: 90vw;
 }
 
@@ -95,16 +113,18 @@ body.ref-mid #msr-widget { right: calc(50% - var(--panel-w) / 2); bottom: auto; 
 
 /* info and settings sheet */
 #sheetBackdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(0,0,0,.35); }
+/* drops down from the top: the address field stays above the phone keyboard and the outline stays in sight */
 #sheet {
-  position: fixed; z-index: 1200; left: 0; right: 0; bottom: 0;
+  position: fixed; z-index: 1200; left: 0; right: 0; top: 0;
   max-height: 88vh; max-height: 88dvh; display: flex; flex-direction: column;
-  background: #fff; border-radius: 16px 16px 0 0; box-shadow: 0 -2px 12px rgba(0,0,0,.25);
+  background: #fff; border-radius: 0 0 16px 16px; box-shadow: 0 2px 12px rgba(0,0,0,.25);
+  padding-top: var(--safe-t);
 }
 @media (min-width: 700px) {
-  #sheet { left: auto; right: var(--gap); bottom: var(--gap); width: 420px; max-height: calc(100vh - 2 * var(--gap)); border-radius: 12px; }
+  #sheet { left: auto; right: var(--gap); top: var(--gap); width: 400px; max-height: calc(100vh - 2 * var(--gap)); border-radius: 12px; padding-top: 0; }
 }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px 0; }
-.sheet-head h1 { font-size: 17px; margin: 0; }
+.sheet-head h1 { font-size: 20px; margin: 0; }
 .sheet-body { padding: 4px 16px calc(var(--safe-b) + 20px); overflow: auto; -webkit-overflow-scrolling: touch; }
 .sheet-body h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #5f6368; margin: 20px 0 6px; }
 .sheet-body p { margin: 6px 0; }
@@ -112,7 +132,9 @@ body.ref-mid #msr-widget { right: calc(50% - var(--panel-w) / 2); bottom: auto; 
 .small { font-size: 12px; }
 a { color: #1a73e8; }
 .row-form { display: flex; gap: 8px; }
-.row-form input { flex: 1; min-width: 0; height: 40px; padding: 0 10px; border: 1px solid #dadce0; border-radius: 8px; font: inherit; }
+.row-form input { flex: 1; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid #dadce0; border-radius: 8px; font: inherit; font-size: 16px; }
+.row-form input:focus { outline: 2px solid #c2410c; outline-offset: -1px; border-color: transparent; }
+.row-form button.primary { height: 44px; }
 button.primary {
   height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: #c2410c; color: #fff;
   font: 600 14px/1 inherit; font-family: inherit; cursor: pointer;
@@ -122,7 +144,8 @@ button.link { border: 0; background: transparent; color: #1a73e8; font: inherit;
 .langPick { height: 36px; padding: 0 14px; border: 1px solid #dadce0; border-radius: 18px; background: #fff; font: inherit; cursor: pointer; }
 .langPick.on { background: #c2410c; border-color: #c2410c; color: #fff; }
 #addrSet { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.msg { margin-top: 6px; font-size: 13px; color: #1e8e3e; min-height: 1em; }
+.msg { margin-top: 6px; font-size: 13px; color: #1e8e3e; }
+.msg:empty { display: none; }
 .msg.err { color: #c5221f; }
 #refs label.row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #f1f3f4; }
 #refs label.row span:first-of-type { flex: 1; }
@@ -132,9 +155,13 @@ button.link { border: 0; background: transparent; color: #1a73e8; font: inherit;
 #refs input[type=checkbox] { width: 18px; height: 18px; accent-color: #c2410c; }
 #refs details { padding: 6px 0; }
 #refs summary { cursor: pointer; color: #5f6368; }
+details.more { margin-top: 18px; }
+details.more > summary { cursor: pointer; color: #5f6368; font-size: 14px; padding: 4px 0; }
+details.more h2 { margin-top: 14px; }
+.foot { margin-top: 18px !important; }
 
 /* ?ui=0: map and reference only, for screenshots */
-body.no-ui #searchForm, body.no-ui #langBtn, body.no-ui #helpBtn, body.no-ui #locateBtn, body.no-ui .leaflet-control-zoom, body.no-ui #searchMsg { display: none !important; }
+body.no-ui .topbar, body.no-ui #locateBtn, body.no-ui .leaflet-control-zoom, body.no-ui #searchMsg { display: none !important; }
 
 /* the outline itself: a full-screen canvas over the map, under the controls; never catches input */
 #msr-overlay { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 999; pointer-events: none; }

@@ -9,57 +9,53 @@
 
   // ---------- texts ----------
   const T = {
-    nl: {
-      searchPlaceholder: 'Zoek een plaats of adres', search: 'Zoeken', whatIs: 'Wat is dit?', close: 'Sluiten',
-      locate: 'Mijn locatie', panelHint: 'Tik om te selecteren, sleep om te verplaatsen',
-      larger: 'Grotere referentie', smaller: 'Kleinere referentie', backToAuto: 'Terug naar automatisch',
-      aboutText: 'Rechtsonder staat een vorm die je kent: Nederland, je provincie, gemeente, wijk of buurt, een vierkante kilometer of een voetbalveld, op precies dezelfde schaal als de kaart. Zoom in of uit en de vorm groeit mee. Past hij niet meer, dan springt het venster naar de volgende. Zo zie je overal ter wereld hoe groot iets is. Tik op het venster om zelf een kleinere referentie te kiezen.',
-      aboutPrivacy: 'Geen cookies, geen tracking. Je instellingen, adres en eigen referenties blijven op je telefoon. Alleen wat je zelf opzoekt gaat de deur uit: je adres naar PDOK, de geo-dienst van de overheid, en zoekopdrachten en eigen referenties naar OpenStreetMap.',
-      extensionLink: 'Google Maps op een computer? Er is ook een Chrome-extensie (gratis, open source).',
-      toMap: 'Naar de kaart', myAddress: 'Mijn adres (Nederland)',
-      addressHelp: 'Vul je adres in voor je provincie, gemeente, wijk en buurt, met een blauw stipje op je huis.',
-      addressPlaceholder: 'Straat huisnummer, plaats', set: 'Instellen', clear: 'Wissen',
-      lookingUp: 'Opzoeken bij PDOK...', searching: 'Zoeken...', notFound: 'Adres niet gevonden. Probeer "straat huisnummer, plaats".',
-      noAreas: 'Geen gebiedsomtrekken gevonden voor dit adres.', setTo: 'Ingesteld: ',
-      references: 'Referenties', provinces: 'Provincies', on: 'aan', of: 'van', language: 'Taal',
-      sources: 'Kaart: OpenStreetMap. Vormen: CBS Gebiedsindelingen en Wijk- en buurtkaart 2024 via PDOK; voetbalveld 105 × 68 m (FIFA); landen en werelddelen van Natural Earth, overige eigen referenties van OpenStreetMap. De kaart is in Web Mercator, dus de vorm is zo groot als het gebied zou zijn als het lag waar je nu kijkt.',
-      tooBig: 'groter dan dit venster', nothingFound: 'Niets gevonden', searchFail: 'Zoeken mislukt, probeer het later opnieuw',
-      geoFail: 'Locatie niet beschikbaar', geoDenied: 'Geef de browser toegang tot je locatie',
-      kind: { gemeente: 'gemeente', wijk: 'wijk', buurt: 'buurt' },
-      names: {},
-      mapChoice: 'Kaart', mapChoiceHelp: 'Google Maps wordt alleen geladen als je het kiest; dan gelden de voorwaarden van Google. Je keuze wordt onthouden.',
-      googleLoading: 'Google Maps laden...', googleFail: 'Google Maps kon niet laden, terug naar OpenStreetMap.',
-      ownRef: 'Eigen referentie (hele wereld)',
-      ownRefHelp: 'Typ een land, werelddeel, regio, stad of eiland, bijvoorbeeld Groenland, Zuid-Afrika, Europa, Texel of Bali. De omtrek komt als referentie op de kaart te staan.',
-      ownRefPlaceholder: 'Land, regio, stad of eiland', add: 'Toevoegen', remove: 'Verwijderen',
-      placeSearching: 'Omtrek opzoeken...', placeNotFound: 'Geen omtrek gevonden. Probeer een andere naam.',
-      placeFail: 'Opzoeken mislukt, probeer het later opnieuw.', placeAdded: ' staat nu vast als referentie.',
-    },
     en: {
-      searchPlaceholder: 'Search a place or address', search: 'Search', whatIs: 'What is this?', close: 'Close',
+      title: 'How big is it?', cta: 'Add my home', ctaDone: 'My places',
+      searchPlaceholder: 'Search', search: 'Search', close: 'Close',
       locate: 'My location', panelHint: 'Tap to select, drag to move',
-      larger: 'Larger reference', smaller: 'Smaller reference', backToAuto: 'Back to automatic',
-      aboutText: 'Bottom right you see a shape you know: the Netherlands, a province, municipality, district or neighbourhood, one square kilometre or a football pitch, at exactly the scale of the map. Zoom in or out and the shape grows with the map. When it no longer fits, the panel switches to the next one. So you can see how big anything is, anywhere in the world. Tap the panel to pick a smaller reference yourself.',
-      aboutPrivacy: 'No cookies, no tracking. Your settings, address and own references stay on your phone. Only what you look up yourself leaves it: your address goes to PDOK, the Dutch national geo service, and searches and own references go to OpenStreetMap.',
-      extensionLink: 'Using Google Maps on a computer? There is also a Chrome extension (free, open source).',
-      toMap: 'To the map', myAddress: 'My address (Netherlands)',
-      addressHelp: 'Enter a Dutch address to get your province, municipality, district and neighbourhood, with a blue dot on your home.',
-      addressPlaceholder: 'Street number, town', set: 'Set', clear: 'Clear',
-      lookingUp: 'Looking up at PDOK...', searching: 'Searching...', notFound: 'Address not found. Try "street number, town".',
-      noAreas: 'No area outlines found for this address.', setTo: 'Set: ',
-      references: 'References', provinces: 'Provinces', on: 'on', of: 'of', language: 'Language',
-      sources: 'Map: OpenStreetMap. Shapes: CBS area outlines 2024 via PDOK; football pitch 105 × 68 m (FIFA); countries and continents from Natural Earth, other own references from OpenStreetMap. The map is Web Mercator, so the shape is as big as the area would be if it lay where you are looking.',
-      tooBig: 'larger than this panel', nothingFound: 'Nothing found', searchFail: 'Search failed, please try again later',
+      larger: 'Larger', smaller: 'Smaller', backToAuto: 'Back to automatic',
+      aboutText: 'The red outline is a place you know, drawn at the scale of the map. Add your own:',
+      myAddress: 'Your home', addressPlaceholder: 'Street 12, Town', set: 'Add', clear: 'Remove',
+      addressHelp: 'Dutch addresses only. Somewhere else? Add your town below.',
+      ownRef: 'Any place in the world', ownRefPlaceholder: 'Town, country or island', add: 'Add', remove: 'Remove',
+      lookingUp: 'Looking up...', searching: 'Searching...', notFound: 'Not found. Try "Street 12, Town".',
+      noAreas: 'No outlines found for this address.', setTo: 'Added: ',
+      more: 'More options', references: 'Outlines', provinces: 'Dutch provinces', on: 'on', of: 'of',
+      aboutPrivacy: 'No cookies, no tracking. Lookups go to PDOK and OpenStreetMap.',
+      extensionLink: 'Chrome extension for Google Maps',
+      sources: 'Data: OpenStreetMap, CBS via PDOK, Natural Earth.',
+      nothingFound: 'Nothing found', searchFail: 'Search failed, try again later',
       geoFail: 'Location not available', geoDenied: 'Allow the browser to use your location',
       kind: { gemeente: 'municipality', wijk: 'district', buurt: 'neighbourhood' },
       names: { nl: 'The Netherlands', km2: '1 square kilometre', voetbalveld: 'Football pitch' },
-      mapChoice: 'Map', mapChoiceHelp: 'Google Maps is only loaded when you choose it; Google\'s terms then apply. Your choice is remembered.',
+      mapChoice: 'Map', mapChoiceHelp: 'Google Maps loads only if you pick it.',
       googleLoading: 'Loading Google Maps...', googleFail: 'Google Maps could not load, back to OpenStreetMap.',
-      ownRef: 'Your own reference (worldwide)',
-      ownRefHelp: 'Type a country, continent, region, city or island, for example Greenland, South Africa, Europe, Texel or Bali. Its outline is placed on the map as the reference.',
-      ownRefPlaceholder: 'Country, region, city or island', add: 'Add', remove: 'Remove',
-      placeSearching: 'Looking up the outline...', placeNotFound: 'No outline found. Try another name.',
-      placeFail: 'Lookup failed, please try again later.', placeAdded: ' is now pinned as the reference.',
+      placeSearching: 'Looking up...', placeNotFound: 'Nothing found. Try another name.',
+      placeFail: 'Lookup failed, try again later.', placeAdded: ' is now your reference.',
+    },
+    nl: {   // only through ?lang=nl (demo video, share images); the visible app is English
+      title: 'Hoe groot is het?', cta: 'Mijn huis toevoegen', ctaDone: 'Mijn plekken',
+      searchPlaceholder: 'Zoeken', search: 'Zoeken', close: 'Sluiten',
+      locate: 'Mijn locatie', panelHint: 'Tik om te selecteren, sleep om te verplaatsen',
+      larger: 'Groter', smaller: 'Kleiner', backToAuto: 'Terug naar automatisch',
+      aboutText: 'De rode omtrek is een plek die je kent, op de schaal van de kaart. Voeg je eigen plek toe:',
+      myAddress: 'Je huis', addressPlaceholder: 'Straat 12, plaats', set: 'Toevoegen', clear: 'Verwijderen',
+      addressHelp: 'Alleen Nederlandse adressen. Ergens anders? Voeg hieronder je plaats toe.',
+      ownRef: 'Elke plek ter wereld', ownRefPlaceholder: 'Plaats, land of eiland', add: 'Toevoegen', remove: 'Verwijderen',
+      lookingUp: 'Opzoeken...', searching: 'Zoeken...', notFound: 'Niet gevonden. Probeer "Straat 12, plaats".',
+      noAreas: 'Geen omtrekken gevonden voor dit adres.', setTo: 'Toegevoegd: ',
+      more: 'Meer opties', references: 'Omtrekken', provinces: 'Provincies', on: 'aan', of: 'van',
+      aboutPrivacy: 'Geen cookies, geen tracking. Opzoeken gaat via PDOK en OpenStreetMap.',
+      extensionLink: 'Chrome-extensie voor Google Maps',
+      sources: 'Data: OpenStreetMap, CBS via PDOK, Natural Earth.',
+      nothingFound: 'Niets gevonden', searchFail: 'Zoeken mislukt, probeer het later opnieuw',
+      geoFail: 'Locatie niet beschikbaar', geoDenied: 'Geef de browser toegang tot je locatie',
+      kind: { gemeente: 'gemeente', wijk: 'wijk', buurt: 'buurt' },
+      names: {},
+      mapChoice: 'Kaart', mapChoiceHelp: 'Google Maps wordt alleen geladen als je het kiest.',
+      googleLoading: 'Google Maps laden...', googleFail: 'Google Maps kon niet laden, terug naar OpenStreetMap.',
+      placeSearching: 'Opzoeken...', placeNotFound: 'Niets gevonden. Probeer een andere naam.',
+      placeFail: 'Opzoeken mislukt, probeer het later opnieuw.', placeAdded: ' is nu je referentie.',
     },
   };
 
@@ -73,7 +69,7 @@
   }
 
   const PROVINCE_IDS = BUILTIN.filter((r) => r.id.startsWith('prov-')).map((r) => r.id);
-  let lang = load(KEYS.lang, null) === 'en' ? 'en' : 'nl';   // Dutch unless the visitor chose English
+  const lang = new URLSearchParams(location.search).get('lang') === 'nl' ? 'nl' : 'en';   // English; ?lang=nl for tools
   let disabled = new Set(load(KEYS.disabled, PROVINCE_IDS));
   let areas = load(KEYS.areas, []);
   let markers = load(KEYS.markers, {});
@@ -92,7 +88,7 @@
   let boxW = 260, boxH = 200;
   let view = null; // {lat, lng, mpp, zoom}
 
-  const t = (k) => (T[lang][k] != null ? T[lang][k] : T.nl[k]);
+  const t = (k) => (T[lang][k] != null ? T[lang][k] : T.en[k]);
   function refName(r) { return T[lang].names[r.id] || r.name; }
 
   // ---------- references ----------
@@ -637,12 +633,14 @@
     }, { enableHighAccuracy: true, timeout: 12000 });
   });
 
-  // ---------- sheet: about, address, references, language ----------
+  // ---------- sheet: about, address, references ----------
   function openSheet() { $('sheet').hidden = false; $('sheetBackdrop').hidden = false; }
   function closeSheet() { $('sheet').hidden = true; $('sheetBackdrop').hidden = true; save(KEYS.seen, true); }
-  $('helpBtn').addEventListener('click', openSheet);
+  $('helpBtn').addEventListener('click', () => {
+    openSheet();
+    if (!address) $('addrInput').focus();      // the button promises "add my home": the cursor is already there
+  });
   $('closeBtn').addEventListener('click', closeSheet);
-  $('goBtn').addEventListener('click', closeSheet);
   $('sheetBackdrop').addEventListener('click', closeSheet);
 
   function setDisabled(id, off) {
@@ -698,6 +696,8 @@
     $('addrSet').hidden = !address;
     $('addrForm').hidden = !!address;
     if (address) $('addrLabel').textContent = address.label;
+    $('helpLabel').textContent = t(address ? 'ctaDone' : 'cta');
+    $('helpBtn').classList.toggle('done', !!address);
   }
 
   async function setAddress() {
@@ -726,10 +726,12 @@
       disabled.add('amsterdam-centrum');       // your own city replaces the Amsterdam example
       if (prov) setDisabled(prov.id, false); else save(KEYS.disabled, [...disabled]);
       pinnedId = null;
-      msg.textContent = t('setTo') + areas.map((a) => a.name).join(', ') + (prov ? ', ' + prov.name : '') + '.';
+      msg.textContent = '';
       $('addrInput').value = '';
       renderAddress();
       renderRefs();
+      closeSheet();
+      toast(t('setTo') + areas.map((a) => a.name).join(', ') + (prov ? ', ' + prov.name : '') + '.', 5000);
       schedule();
     } catch (e) {
       msg.className = 'msg err';
@@ -833,16 +835,11 @@
     document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = t(el.dataset.i18nPlaceholder); });
     document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = t(el.dataset.i18nTitle); el.setAttribute('aria-label', t(el.dataset.i18nTitle)); });
-    $('langBtn').textContent = lang === 'nl' ? 'EN' : 'NL';
-    $('langBtn').title = lang === 'nl' ? 'English' : 'Nederlands';
-    document.querySelectorAll('.langPick[data-lang]').forEach((b) => b.classList.toggle('on', b.dataset.lang === lang));
+    renderAddress();
     renderRefs();
     currentId = null;
     schedule();
   }
-  function setLang(l) { lang = l; save(KEYS.lang, l); applyLang(); }
-  $('langBtn').addEventListener('click', () => setLang(lang === 'nl' ? 'en' : 'nl'));
-  document.querySelectorAll('.langPick[data-lang]').forEach((b) => b.addEventListener('click', () => setLang(b.dataset.lang)));
 
   // ---------- map choice (only shown when a Google key is configured) ----------
   $('mapChoice').hidden = !GOOGLE_KEY;

@@ -6,7 +6,7 @@ Hoe groot is dat eigenlijk? Ik heb een kaart gemaakt waarop Nederland, je provin
 
 Op je telefoon of computer, zonder installatie:
 https://herberttenhave.github.io/maps-schaalreferentie/web/
-Tip: via het vraagteken je adres invullen voor je eigen stad en wijk.
+Tip: tik op Add my home en vul je adres in voor je eigen stad en wijk.
 
 Liever in Google Maps zelf, op de computer? Chrome-extensie:
 https://github.com/HerberttenHave/maps-schaalreferentie
@@ -19,7 +19,7 @@ How big is that, really? I made a map that lays the Netherlands, your province, 
 
 On your phone or computer, nothing to install:
 https://herberttenhave.github.io/maps-schaalreferentie/web/
-Tip: tap the question mark to switch to English or save any area as your own reference.
+Tip: tap Add my home to add your own town, or any place in the world.
 
 Prefer it inside Google Maps on a computer? Chrome extension:
 https://github.com/HerberttenHave/maps-schaalreferentie

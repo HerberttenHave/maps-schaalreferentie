@@ -63,7 +63,7 @@ async function main() {
     localStorage.setItem('msr.pos', JSON.stringify({ right: ${Math.round((W - PANEL) / 2)}, bottom: ${Math.round((H - frameH) / 2)} })); 'ok'`);
 
   for (const s of SCENES.filter((x) => !ONLY || ONLY.includes(x.name))) {
-    await send('Page.navigate', { url: `${BASE}?panel=${PANEL}&ui=0&s=${Date.now()}${s.ref ? '&ref=' + encodeURIComponent(s.ref) : ''}#${s.lat},${s.lng},${s.zoom}z` });
+    await send('Page.navigate', { url: `${BASE}?panel=${PANEL}&ui=0&lang=nl&s=${Date.now()}${s.ref ? '&ref=' + encodeURIComponent(s.ref) : ''}#${s.lat},${s.lng},${s.zoom}z` });
     await sleep(s.ref ? 9000 : 6000);   // tiles, and the outline lookup for ?ref=
     const name = await evaluate(`document.querySelector('.msr-name') && document.querySelector('.msr-name').textContent`);
     const r = await send('Page.captureScreenshot', { format: 'png' });

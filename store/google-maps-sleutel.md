@@ -1,6 +1,6 @@
 # Google Maps in de webversie: sleutel aanmaken
 
-De webversie (https://herberttenhave.github.io/maps-schaalreferentie/) toont standaard OpenStreetMap. Met een Google Maps API-sleutel in `web/config.js` krijgen bezoekers onder **?** een keuze "OpenStreetMap / Google Maps" (kaart of satelliet). Zonder sleutel wordt niets van Google geladen en is de keuze onzichtbaar.
+De webversie (https://herberttenhave.github.io/maps-schaalreferentie/) toont standaard OpenStreetMap. Met een Google Maps API-sleutel in `web/config.js` krijgen bezoekers onder **Add my home**, More options, een keuze "OpenStreetMap / Google Maps" (kaart of satelliet). Zonder sleutel wordt niets van Google geladen en is de keuze onzichtbaar.
 
 ## 1. Sleutel aanmaken in Google Cloud Console (10 minuten)
 
@@ -32,7 +32,7 @@ Voor een link in WhatsApp-groepen blijf je ruim binnen het gratis deel: 10.000 l
    ```
 
 2. Commit en push naar `main`. GitHub Pages bouwt binnen een paar minuten opnieuw.
-3. Open de webversie, tik op **?** en kies **Google Maps**. De keuze wordt per telefoon onthouden (localStorage); OpenStreetMap blijft de standaard voor nieuwe bezoekers.
+3. Open de webversie, tik op **Add my home**, dan **More options**, en kies **Google Maps**. De keuze wordt per telefoon onthouden (localStorage); OpenStreetMap blijft de standaard voor nieuwe bezoekers.
 
 Werkt de sleutel niet (verkeerde beperking, facturering niet gekoppeld), dan meldt de kaart "Google Maps kon niet laden" en valt hij terug op OpenStreetMap. Kijk dan in Cloud Console onder **API's en services > Maps JavaScript API > Statistieken** naar de foutmeldingen.
 

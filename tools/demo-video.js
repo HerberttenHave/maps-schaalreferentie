@@ -74,7 +74,7 @@ async function main() {
   await send('Page.navigate', { url: BASE + '?ui=0' });
   await sleep(2500);
   await evaluate(`localStorage.clear(); localStorage.setItem('msr.seen', 'true'); localStorage.setItem('msr.lang', '"${LANG}"'); localStorage.setItem('msr.map', '"osm"'); 'ok'`);
-  const url = `${BASE}?ref=${encodeURIComponent(TEXT.ref)}&home=1&ui=0&panel=620&t=${Date.now()}#${VIEW.lat},${VIEW.lng},${VIEW.zoom}z`;
+  const url = `${BASE}?ref=${encodeURIComponent(TEXT.ref)}&home=1&ui=0&panel=620&lang=${LANG}&t=${Date.now()}#${VIEW.lat},${VIEW.lng},${VIEW.zoom}z`;
   await send('Page.navigate', { url });
   await sleep(7000);   // reference lookup and tiles
 
