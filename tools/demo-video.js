@@ -1,7 +1,8 @@
 // 15-second demo clip: Greenland is dragged off its own place to Africa and shrinks to its true size.
 // Records the real web version in headless Edge (a real mouse drag through the DevTools protocol) and
 // encodes the frames with ffmpeg.
-//   MSR_BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" node tools/demo-video.js [nl|en] [outdir] [--stills]
+//   MSR_BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" node tools/demo-video.js [nl|en] [outdir] [--stills] [--4x5]
+// --4x5 gives 1080 x 1350 for the LinkedIn feed (default 1080 x 1920, portrait for phones).
 // MSR_WEB overrides the page (default: the live site), e.g. http://127.0.0.1:8765/web/ for a local server.
 const { spawn, execFileSync } = require('child_process');
 const http = require('http');
@@ -15,8 +16,13 @@ const LANG = (process.argv[2] === 'en') ? 'en' : 'nl';
 const OUT = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : path.join(__dirname, '..', 'store', 'video');
 const STILLS = process.argv.includes('--stills');
 
-const W = 864, H = 1536, DSF = 1.25, FPS = 30;     // 1080 x 1920 output, portrait for phones
-const VIEW = { lat: 51.46, lng: 0, zoom: 3 };      // Greenland top left, Africa bottom right; a whole zoom level, so no tile seams
+const FEED = process.argv.includes('--4x5');
+const FPS = 30;
+// The zoom stays a whole level and the capture scale 1 or 1.25 (a scale below 1 shows seams between map tiles),
+// so the wider 4:5 frame is captured at 1200 x 1500 and scaled to 1080 x 1350 by ffmpeg. S keeps the texts
+// the same size in the output.
+const W = FEED ? 1200 : 864, H = FEED ? 1500 : 1536, DSF = FEED ? 1 : 1.25, S = FEED ? 1.25 / 0.9 : 1;
+const VIEW = FEED ? { lat: 51.5, lng: -8, zoom: 3 } : { lat: 51.46, lng: 0, zoom: 3 };   // Greenland top left, Africa bottom right
 const TARGET = { lat: -14, lng: 20.5 };            // where the bottom centre of the outline ends up: the heart of Africa
 const T = {                                        // seconds
   hold: 3.0, move: 6.5, total: 15,
@@ -79,24 +85,25 @@ async function main() {
   await sleep(7000);   // reference lookup and tiles
 
   // Captions, footer and a pointer dot: recording dressing, not part of the app.
+  const px = (n) => Math.round(n * S) + 'px';
   await evaluate(`(() => {
     const st = document.createElement('style');
     st.textContent = \`
-      #msr-widget { font-size: 23px !important; }
-      #msr-widget .msr-size { font-size: 18px !important; }
+      #msr-widget { font-size: ${px(23)} !important; }
+      #msr-widget .msr-size { font-size: ${px(18)} !important; }
       #msr-widget .msr-tools { display: none !important; }
       #map, .leaflet-container { background: #aad3df !important; }
-      .vid-cap { position: fixed; left: 24px; right: 24px; top: 34px; z-index: 5000; text-align: center; pointer-events: none;
-        font: 600 37px/1.25 'Segoe UI', system-ui, sans-serif; color: #202124; background: rgba(255,255,255,.94);
-        border-radius: 18px; padding: 18px 20px; box-shadow: 0 2px 10px rgba(0,0,0,.25); opacity: 0; }
+      .vid-cap { position: fixed; left: ${px(24)}; right: ${px(24)}; top: ${px(34)}; z-index: 5000; text-align: center; pointer-events: none;
+        font: 600 ${px(37)}/1.25 'Segoe UI', system-ui, sans-serif; color: #202124; background: rgba(255,255,255,.94);
+        border-radius: ${px(18)}; padding: ${px(18)} ${px(20)}; box-shadow: 0 ${px(2)} ${px(10)} rgba(0,0,0,.25); opacity: 0; }
       .vid-cap b { color: #d32f2f; font-weight: 700; }
-      #vidFoot { position: fixed; left: 24px; right: 24px; bottom: 30px; z-index: 5000; text-align: center; pointer-events: none;
-        font: 500 27px/1.3 'Segoe UI', system-ui, sans-serif; color: #fff; background: rgba(32,33,36,.9);
-        border-radius: 16px; padding: 14px 16px; opacity: 0; }
-      #vidFoot span { display: block; font-weight: 700; font-size: 29px; margin-top: 2px; }
-      #vidDot { position: fixed; z-index: 5001; width: 50px; height: 50px; margin: 34px 0 0 -25px; border-radius: 50%;
-        background: rgba(26,115,232,.35); border: 3px solid #fff; box-shadow: 0 1px 6px rgba(0,0,0,.4); pointer-events: none; opacity: 0; }
-      .leaflet-control-attribution { font-size: 14px !important; }
+      #vidFoot { position: fixed; left: ${px(24)}; right: ${px(24)}; bottom: ${px(30)}; z-index: 5000; text-align: center; pointer-events: none;
+        font: 500 ${px(27)}/1.3 'Segoe UI', system-ui, sans-serif; color: #fff; background: rgba(32,33,36,.9);
+        border-radius: ${px(16)}; padding: ${px(14)} ${px(16)}; opacity: 0; }
+      #vidFoot span { display: block; font-weight: 700; font-size: ${px(29)}; margin-top: ${px(2)}; }
+      #vidDot { position: fixed; z-index: 5001; width: ${px(50)}; height: ${px(50)}; margin: ${px(34)} 0 0 -${px(25)}; border-radius: 50%;
+        background: rgba(26,115,232,.35); border: ${px(3)} solid #fff; box-shadow: 0 ${px(1)} ${px(6)} rgba(0,0,0,.4); pointer-events: none; opacity: 0; }
+      .leaflet-control-attribution { font-size: ${px(14)} !important; }
     \`;
     document.head.appendChild(st);
     const mk = (id, cls, html) => { const d = document.createElement('div'); d.id = id; d.className = cls; d.innerHTML = html; document.body.appendChild(d); };
@@ -144,7 +151,7 @@ async function main() {
     })()`);
     await sleep(STILLS ? 400 : 55);     // the app redraws 16 ms after a move
     const r = await send('Page.captureScreenshot', { format: 'jpeg', quality: 93 });
-    const file = STILLS ? path.join(OUT, `still-${LANG}-${String(f).padStart(3, '0')}.jpg`) : path.join(frames, `f_${String(n).padStart(4, '0')}.jpg`);
+    const file = STILLS ? path.join(OUT, `still-${LANG}${FEED ? '-4x5' : ''}-${String(f).padStart(3, '0')}.jpg`) : path.join(frames, `f_${String(n).padStart(4, '0')}.jpg`);
     fs.writeFileSync(file, Buffer.from(r.result.data, 'base64'));
     n++;
     if (!STILLS && n % 90 === 0) console.log('frame', n, '/', total);
@@ -160,8 +167,9 @@ async function main() {
   try { fs.rmSync(profile, { recursive: true, force: true }); } catch (e) { /* locked */ }
 
   if (!STILLS) {
-    const mp4 = path.join(OUT, `groenland-afrika-${LANG}.mp4`);
+    const mp4 = path.join(OUT, `groenland-afrika-${LANG}${FEED ? '-4x5' : ''}.mp4`);
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', path.join(frames, 'f_%04d.jpg'),
+      ...(FEED ? ['-vf', 'scale=1080:1350:flags=lanczos'] : []),
       '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', mp4], { stdio: 'inherit' });
     console.log('saved', mp4, Math.round(fs.statSync(mp4).size / 1024) + ' kB');
     fs.rmSync(frames, { recursive: true, force: true });
